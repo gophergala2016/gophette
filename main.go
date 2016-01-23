@@ -5,6 +5,7 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/sdl_image"
 	"github.com/veandco/go-sdl2/sdl_mixer"
+	"time"
 	"unsafe"
 )
 
@@ -31,9 +32,15 @@ func main() {
 	defer window.Destroy()
 	window.SetTitle("Gophette's Adventures")
 
+	window.SetFullscreen(sdl.WINDOW_FULLSCREEN_DESKTOP)
+	fullscreen := true
+
 	assetLoader := newSDLAssetLoader(renderer)
 	defer assetLoader.close()
 	game := NewGame(assetLoader)
+
+	frameTime := time.Second / 60
+	lastUpdate := time.Now().Add(-frameTime)
 
 	for game.Running() {
 		for e := sdl.PollEvent(); e != nil; e = sdl.PollEvent() {
@@ -57,6 +64,13 @@ func main() {
 					game.HandleInput(InputEvent{GoRight, false})
 				case sdl.K_UP:
 					game.HandleInput(InputEvent{Jump, false})
+				case sdl.K_F11:
+					if fullscreen {
+						window.SetFullscreen(0)
+					} else {
+						window.SetFullscreen(sdl.WINDOW_FULLSCREEN_DESKTOP)
+					}
+					fullscreen = !fullscreen
 				case sdl.K_ESCAPE:
 					game.HandleInput(InputEvent{QuitGame, false})
 				}
@@ -68,6 +82,13 @@ func main() {
 			case *sdl.QuitEvent:
 				game.HandleInput(InputEvent{QuitGame, true})
 			}
+		}
+
+		now := time.Now()
+		dt := now.Sub(lastUpdate)
+		if dt > frameTime {
+			game.Update()
+			lastUpdate = now
 		}
 
 		renderer.SetDrawColor(0, 0, 0, 255)
