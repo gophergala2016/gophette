@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"github.com/disintegration/imaging"
 	"github.com/gonutz/xcf"
 	"github.com/nfnt/resize"
 	"image"
@@ -21,9 +22,15 @@ func main() {
 	check(err)
 	for i := range gophette.Layers {
 		if gophette.Layers[i].Visible {
+			small := scaleImage(gophette.Layers[i])
+
 			buffer := bytes.NewBuffer(nil)
-			check(png.Encode(buffer, scaleImage(gophette.Layers[i])))
-			resources["gophette_"+gophette.Layers[i].Name] = buffer.Bytes()
+			check(png.Encode(buffer, small))
+			resources["gophette_left_"+gophette.Layers[i].Name] = buffer.Bytes()
+
+			buffer = bytes.NewBuffer(nil)
+			check(png.Encode(buffer, imaging.FlipH(small)))
+			resources["gophette_right_"+gophette.Layers[i].Name] = buffer.Bytes()
 		}
 	}
 
@@ -43,6 +50,8 @@ func scaleImage(img image.Image) image.Image {
 func toGoFile(resources ResourceMap) []byte {
 	buffer := bytes.NewBuffer(nil)
 	buffer.WriteString(`package main
+
+// NOTE this file is generated, do not edit it
 
 var Resources = map[string][]byte{`)
 
