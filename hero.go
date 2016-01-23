@@ -31,3 +31,7 @@ func NewHero(assets AssetLoader) *Hero {
 		},
 	}
 }
+
+func (h *Hero) Render() {
+	h.runFrames[LeftDirectionIndex][0].DrawAt(0, 0)
+}

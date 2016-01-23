@@ -23,3 +23,7 @@ func (g *Game) HandleInput(event InputEvent) {
 func (g *Game) Running() bool {
 	return g.running
 }
+
+func (g *Game) Render() {
+	g.hero.Render()
+}

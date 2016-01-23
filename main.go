@@ -5,6 +5,7 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/sdl_image"
 	"github.com/veandco/go-sdl2/sdl_mixer"
+	"unsafe"
 )
 
 func main() {
@@ -30,7 +31,9 @@ func main() {
 	defer window.Destroy()
 	window.SetTitle("Gophette's Adventures")
 
-	game := NewGame(dummyAssetLoader{})
+	assetLoader := newSDLAssetLoader(renderer)
+	defer assetLoader.close()
+	game := NewGame(assetLoader)
 
 	for game.Running() {
 		for e := sdl.PollEvent(); e != nil; e = sdl.PollEvent() {
@@ -66,6 +69,11 @@ func main() {
 				game.HandleInput(InputEvent{QuitGame, true})
 			}
 		}
+
+		renderer.SetDrawColor(0, 0, 0, 255)
+		renderer.Clear()
+		game.Render()
+		renderer.Present()
 	}
 }
 
@@ -75,8 +83,52 @@ func check(err error) {
 	}
 }
 
-type dummyAssetLoader struct{}
+type textureImage struct {
+	renderer *sdl.Renderer
+	texture  *sdl.Texture
+}
 
-func (dummyAssetLoader) LoadImage(string) Image {
-	return nil
+func (img *textureImage) DrawAt(x, y int) {
+	_, _, w, h, _ := img.texture.Query()
+	dest := sdl.Rect{int32(x), int32(y), w, h}
+	img.renderer.Copy(img.texture, nil, &dest)
+}
+
+type sdlAssetLoader struct {
+	renderer *sdl.Renderer
+	images   map[string]*textureImage
+}
+
+func newSDLAssetLoader(renderer *sdl.Renderer) *sdlAssetLoader {
+	return &sdlAssetLoader{
+		renderer: renderer,
+		images:   make(map[string]*textureImage),
+	}
+}
+
+func (l *sdlAssetLoader) LoadImage(id string) Image {
+	if img, ok := l.images[id]; ok {
+		return img
+	}
+	data := Resources[id]
+	if data == nil {
+		panic("unknown resource: " + id)
+	}
+
+	rwOps := sdl.RWFromMem(unsafe.Pointer(&data[0]), len(data))
+	surface, err := img.Load_RW(rwOps, false)
+	check(err)
+	defer surface.Free()
+	texture, err := l.renderer.CreateTextureFromSurface(surface)
+	check(err)
+	image := &textureImage{l.renderer, texture}
+	l.images[id] = image
+
+	return image
+}
+
+func (l *sdlAssetLoader) close() {
+	for _, image := range l.images {
+		image.texture.Destroy()
+	}
 }
