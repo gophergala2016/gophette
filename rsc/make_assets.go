@@ -70,9 +70,10 @@ func main() {
 		"run5",
 		"run6",
 	} {
-		small := scaleImage(barney.GetLayerByName(layer))
-		resources["barney_left_"+layer] = imageToBytes(small)
-		resources["barney_right_"+layer] = imageToBytes(imaging.FlipH(small))
+		smallLeft := scaleImage(barney.GetLayerByName("left_" + layer))
+		smallRight := scaleImage(barney.GetLayerByName("right_" + layer))
+		resources["barney_left_"+layer] = imageToBytes(smallLeft)
+		resources["barney_right_"+layer] = imageToBytes(smallRight)
 	}
 
 	content := toGoFile(resources, string(constants.Bytes()))
