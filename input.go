@@ -13,3 +13,18 @@ const (
 	Jump
 	QuitGame
 )
+
+func (a InputAction) String() string {
+	switch a {
+	case GoLeft:
+		return "GoLeft"
+	case GoRight:
+		return "GoRight"
+	case Jump:
+		return "Jump"
+	case QuitGame:
+		return "QuitGame"
+	default:
+		return "unknown input"
+	}
+}

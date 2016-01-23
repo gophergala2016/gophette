@@ -11,7 +11,7 @@ const (
 	HeroHighGravity       = 2
 	HeroLowGravity        = 1
 
-	HeroRunFrameDelay = 4
+	HeroRunFrameDelay = 3
 )
 
 type Hero struct {

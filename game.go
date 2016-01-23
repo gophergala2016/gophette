@@ -17,16 +17,17 @@ type Game struct {
 
 type Camera interface {
 	CenterAround(x, y int)
+	SetBounds(Rectangle)
 }
 
 func NewGame(assets AssetLoader, graphics Graphics, cam Camera) *Game {
 	hero := NewHero(assets)
-	hero.SetBottomCenterTo(380, -900)
+	hero.SetBottomCenterTo(100, -800)
 	hero.Direction = RightDirectionIndex
 
 	objects := []CollisionObject{
-		{Rectangle{10, -10000, 1, 20000}},   // left wall
-		{Rectangle{1998, -10000, 1, 20000}}, // right wall
+		{Rectangle{0, -10000, 1, 20000}},    // left wall
+		{Rectangle{1999, -10000, 1, 20000}}, // right wall
 		{Rectangle{0, 800, 2000, 50}},       // floor
 
 		{Rectangle{400, 610, 200, 50}},
@@ -34,11 +35,15 @@ func NewGame(assets AssetLoader, graphics Graphics, cam Camera) *Game {
 		{Rectangle{380, 230, 200, 50}},
 		{Rectangle{820, 40, 200, 50}},
 		{Rectangle{360, -150, 200, 50}},
-		{Rectangle{840, -340, 200, 50}},
+		{Rectangle{840, -340, 1050, 50}},
 		{Rectangle{340, -530, 200, 50}},
 		{Rectangle{100, -783, 200, 50}}, // max jump height is 253
-		{Rectangle{300, -783 - 253, 200, 50}},
+		{Rectangle{300, -1036, 1000, 50}},
+		{Rectangle{1700, -1036, 200, 50}},
+		{Rectangle{1840, -840, 50, 1000}},
 	}
+
+	cam.SetBounds(Rectangle{0, -1399, 2000, 2200})
 
 	return &Game{
 		running:  true,
@@ -50,6 +55,10 @@ func NewGame(assets AssetLoader, graphics Graphics, cam Camera) *Game {
 }
 
 func (g *Game) HandleInput(event InputEvent) {
+	if recordingInput {
+		inputs = append(inputs, inputRecord{frame: frame, event: event})
+	}
+
 	if event.Action == GoLeft {
 		g.leftDown = event.Pressed
 	}
@@ -63,10 +72,21 @@ func (g *Game) HandleInput(event InputEvent) {
 
 	if event.Action == QuitGame {
 		g.running = false
+		if recordingInput {
+			saveRecordedInputs()
+		}
 	}
 }
 
 func (g *Game) Update() {
+	if replayingInput {
+		for len(inputs) > 0 && inputs[0].frame == frame {
+			g.HandleInput(inputs[0].event)
+			inputs = inputs[1:]
+		}
+	}
+	frame++
+
 	// decelerate the hero to 0
 	if g.hero.SpeedX > 0 {
 		g.hero.SpeedX -= HeroDecelerationX
