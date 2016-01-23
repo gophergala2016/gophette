@@ -16,10 +16,12 @@ type Game struct {
 
 func NewGame(assets AssetLoader, graphics Graphics) *Game {
 	hero := NewHero(assets)
-	hero.X, hero.Y = 100, 800
+	hero.SetBottomCenterTo(100, 799)
 	hero.Direction = RightDirectionIndex
 
 	objects := []CollisionObject{
+		{Rectangle{0, -10000, 1, 20000}},   // left wall
+		{Rectangle{800, -10000, 1, 20000}}, // right wall
 		{Rectangle{0, 800, 2000, 50}},
 	}
 
@@ -94,7 +96,40 @@ func (g *Game) Update() {
 		g.hero.SpeedY += HeroHighGravity
 	}
 
-	g.hero.Update()
+	g.hero.Update(g)
+}
+
+func (g *Game) MoveInX(bounds Rectangle, dx int) (newBounds Rectangle, collided bool) {
+	newBounds = bounds.MoveBy(dx, 0)
+	// create a rectangle that occupies all space from current to new
+	// position and then check if it overlaps any object
+	if dx < 0 {
+		moveSpace := bounds
+		moveSpace.X += dx
+		moveSpace.W -= dx // make it wider, dx is negative
+		for i := range g.objects {
+			if g.objects[i].Bounds.Overlaps(moveSpace) {
+				collided = true
+				overlap := g.objects[i].Bounds.X + g.objects[i].Bounds.W - moveSpace.X
+				moveSpace.X += overlap
+				moveSpace.W -= overlap
+			}
+		}
+		newBounds = bounds.MoveTo(moveSpace.X, moveSpace.Y)
+	}
+	if dx > 0 {
+		moveSpace := bounds
+		moveSpace.W += dx
+		for i := range g.objects {
+			if g.objects[i].Bounds.Overlaps(moveSpace) {
+				collided = true
+				overlap := moveSpace.X + moveSpace.W - g.objects[i].Bounds.X
+				moveSpace.W -= overlap
+			}
+		}
+		newBounds = bounds.MoveTo(moveSpace.X+moveSpace.W-bounds.W, moveSpace.Y)
+	}
+	return
 }
 
 func (g *Game) Running() bool {

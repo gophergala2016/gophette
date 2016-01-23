@@ -13,7 +13,7 @@ const (
 
 type Hero struct {
 	Direction int
-	X, Y      int
+	Position  Rectangle
 	SpeedX    int
 	SpeedY    int
 
@@ -27,6 +27,7 @@ type Hero struct {
 
 func NewHero(assets AssetLoader) *Hero {
 	return &Hero{
+		Position: HeroCollisionRect,
 		runFrames: [DirectionCount][3]Image{
 			[3]Image{
 				assets.LoadImage("gophette_left_run1"),
@@ -46,6 +47,11 @@ func NewHero(assets AssetLoader) *Hero {
 	}
 }
 
+func (h *Hero) SetBottomCenterTo(x, y int) {
+	h.Position.X = x - h.Position.W/2
+	h.Position.Y = y - h.Position.H
+}
+
 func (h *Hero) Render() {
 	var frame Image
 	if h.InAir {
@@ -62,11 +68,20 @@ func (h *Hero) Render() {
 		frame = h.runFrames[h.Direction][frameIndex]
 	}
 
-	_, height := frame.Size()
-	frame.DrawAt(h.X, h.Y-height)
+	// the position is that of the collision rectangle, the image does not have
+	// the same size as the collision rectangle so it must be offset relative
+	// to the collision rectangle's top-left corner for drawing
+	frame.DrawAt(
+		h.Position.X-HeroCollisionRect.X,
+		h.Position.Y-HeroCollisionRect.Y,
+	)
 }
 
-func (h *Hero) Update() {
+type Collider interface {
+	MoveInX(bounds Rectangle, dx int) (newBounds Rectangle, collided bool)
+}
+
+func (h *Hero) Update(collider Collider) {
 	if h.SpeedX < 0 {
 		h.Direction = LeftDirectionIndex
 	}
@@ -74,6 +89,8 @@ func (h *Hero) Update() {
 		h.Direction = RightDirectionIndex
 	}
 
+	// NOTE putting this code AFTER the collision detection will not have her
+	// run while stuck in a wall
 	if h.SpeedX == 0 {
 		h.runFrameIndex = 0
 		h.nextRunFrame = 0
@@ -85,13 +102,18 @@ func (h *Hero) Update() {
 		}
 	}
 
-	h.InAir = true
+	var collided bool
+	h.Position, collided = collider.MoveInX(h.Position, h.SpeedX)
+	if collided {
+		h.SpeedX = 0
+	}
 
-	h.X += h.SpeedX
-	h.Y += h.SpeedY
+	// TODO collide correctly in Y as well
+	h.InAir = true // assume this until proven otherwise
+	h.Position.Y += h.SpeedY
 
-	if h.Y > 800 {
-		h.Y = 800
+	if h.Position.Y+h.Position.H > 800 {
+		h.Position.Y = 800 - h.Position.H
 		h.SpeedY = 0
 		h.InAir = false
 	}
