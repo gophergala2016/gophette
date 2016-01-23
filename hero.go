@@ -4,7 +4,7 @@ const (
 	HeroAccelerationX     = 2
 	HeroDecelerationX     = 1
 	HeroMaxSpeedX         = 10
-	HeroInitialJumpSpeedY = -25
+	HeroInitialJumpSpeedY = -22
 	HeroHighGravity       = 2
 	HeroLowGravity        = 1
 
@@ -47,8 +47,9 @@ func NewHero(assets AssetLoader) *Hero {
 }
 
 func (h *Hero) Render() {
+	var frame Image
 	if h.InAir {
-		h.jumpFrames[h.Direction].DrawAt(h.X, h.Y)
+		frame = h.jumpFrames[h.Direction]
 	} else {
 		// the order of animation images is 0,1,0,2  0,1,0,2  0,1 ...
 		frameIndex := h.runFrameIndex
@@ -58,8 +59,11 @@ func (h *Hero) Render() {
 		if frameIndex == 3 {
 			frameIndex = 2
 		}
-		h.runFrames[h.Direction][frameIndex].DrawAt(h.X, h.Y)
+		frame = h.runFrames[h.Direction][frameIndex]
 	}
+
+	_, height := frame.Size()
+	frame.DrawAt(h.X, h.Y-height)
 }
 
 func (h *Hero) Update() {

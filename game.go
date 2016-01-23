@@ -1,6 +1,8 @@
 package main
 
 type Game struct {
+	graphics Graphics
+
 	running bool
 	hero    *Hero
 
@@ -8,16 +10,24 @@ type Game struct {
 	rightDown         bool
 	jumpDown          bool
 	mustJumpThisFrame bool
+
+	objects []CollisionObject
 }
 
-func NewGame(assets AssetLoader) *Game {
+func NewGame(assets AssetLoader, graphics Graphics) *Game {
 	hero := NewHero(assets)
 	hero.X, hero.Y = 100, 800
 	hero.Direction = RightDirectionIndex
 
+	objects := []CollisionObject{
+		{Rectangle{0, 800, 2000, 50}},
+	}
+
 	return &Game{
-		running: true,
-		hero:    hero,
+		running:  true,
+		graphics: graphics,
+		hero:     hero,
+		objects:  objects,
 	}
 }
 
@@ -92,5 +102,9 @@ func (g *Game) Running() bool {
 }
 
 func (g *Game) Render() {
+	for i := range g.objects {
+		g.graphics.FillRect(g.objects[i].Bounds, 255, 0, 0, 255)
+	}
+
 	g.hero.Render()
 }

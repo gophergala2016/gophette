@@ -40,7 +40,7 @@ func main() {
 
 	assetLoader := newSDLAssetLoader(renderer)
 	defer assetLoader.close()
-	game := NewGame(assetLoader)
+	game := NewGame(assetLoader, sdlGraphics{renderer})
 
 	frameTime := time.Second / 60
 	lastUpdate := time.Now().Add(-frameTime)
@@ -122,6 +122,11 @@ func (img *textureImage) DrawAt(x, y int) {
 	img.renderer.Copy(img.texture, nil, &dest)
 }
 
+func (img *textureImage) Size() (int, int) {
+	_, _, w, h, _ := img.texture.Query()
+	return int(w), int(h)
+}
+
 type sdlAssetLoader struct {
 	renderer *sdl.Renderer
 	images   map[string]*textureImage
@@ -159,4 +164,14 @@ func (l *sdlAssetLoader) close() {
 	for _, image := range l.images {
 		image.texture.Destroy()
 	}
+}
+
+type sdlGraphics struct {
+	renderer *sdl.Renderer
+}
+
+func (graphics sdlGraphics) FillRect(rect Rectangle, r, g, b, a uint8) {
+	graphics.renderer.SetDrawColor(r, g, b, a)
+	sdlRect := sdl.Rect{int32(rect.X), int32(rect.Y), int32(rect.W), int32(rect.H)}
+	graphics.renderer.FillRect(&sdlRect)
 }
