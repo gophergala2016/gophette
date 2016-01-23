@@ -5,7 +5,7 @@ type Game struct {
 	camera   Camera
 
 	running bool
-	hero    *Hero
+	hero    *Character
 
 	leftDown          bool
 	rightDown         bool
@@ -21,8 +21,10 @@ type Camera interface {
 }
 
 func NewGame(assets AssetLoader, graphics Graphics, cam Camera) *Game {
-	hero := NewHero(assets)
-	hero.SetBottomCenterTo(100, -800)
+	//hero := NewHero(assets)
+	hero := NewBarney(assets) // TODO
+
+	hero.SetBottomCenterTo(100, 800)
 	hero.Direction = RightDirectionIndex
 
 	objects := []CollisionObject{
@@ -89,13 +91,13 @@ func (g *Game) Update() {
 
 	// decelerate the hero to 0
 	if g.hero.SpeedX > 0 {
-		g.hero.SpeedX -= HeroDecelerationX
+		g.hero.SpeedX -= g.hero.Params.DecelerationX
 		if g.hero.SpeedX < 0 {
 			g.hero.SpeedX = 0
 		}
 	}
 	if g.hero.SpeedX < 0 {
-		g.hero.SpeedX += HeroDecelerationX
+		g.hero.SpeedX += g.hero.Params.DecelerationX
 		if g.hero.SpeedX > 0 {
 			g.hero.SpeedX = 0
 		}
@@ -103,15 +105,15 @@ func (g *Game) Update() {
 
 	// accelerate the hero if pressing left or right (exclusively)
 	if g.leftDown && !g.rightDown {
-		g.hero.SpeedX -= HeroAccelerationX
-		if g.hero.SpeedX < -HeroMaxSpeedX {
-			g.hero.SpeedX = -HeroMaxSpeedX
+		g.hero.SpeedX -= g.hero.Params.AccelerationX
+		if g.hero.SpeedX < -g.hero.Params.MaxSpeedX {
+			g.hero.SpeedX = -g.hero.Params.MaxSpeedX
 		}
 	}
 	if g.rightDown && !g.leftDown {
-		g.hero.SpeedX += HeroAccelerationX
-		if g.hero.SpeedX > HeroMaxSpeedX {
-			g.hero.SpeedX = HeroMaxSpeedX
+		g.hero.SpeedX += g.hero.Params.AccelerationX
+		if g.hero.SpeedX > g.hero.Params.MaxSpeedX {
+			g.hero.SpeedX = g.hero.Params.MaxSpeedX
 		}
 	}
 
@@ -120,19 +122,19 @@ func (g *Game) Update() {
 	// launch into the next jump right away. Only when you release the jump
 	// button and press it again will you launch another jump
 	if g.mustJumpThisFrame && !g.hero.InAir {
-		g.hero.SpeedY = HeroInitialJumpSpeedY
+		g.hero.SpeedY = g.hero.Params.InitialJumpSpeedY
 	}
 	g.mustJumpThisFrame = false
 
 	goingUp := g.hero.SpeedY < 0
 	if goingUp && g.jumpDown {
 		// make her jump higher if holding jump while going up
-		g.hero.SpeedY += HeroLowGravity
+		g.hero.SpeedY += g.hero.Params.LowGravity
 	} else {
-		g.hero.SpeedY += HeroHighGravity
+		g.hero.SpeedY += g.hero.Params.HighGravity
 	}
-	if g.hero.SpeedY > HeroMaxSpeedY {
-		g.hero.SpeedY = HeroMaxSpeedY
+	if g.hero.SpeedY > g.hero.Params.MaxSpeedY {
+		g.hero.SpeedY = g.hero.Params.MaxSpeedY
 	}
 
 	g.hero.Update(g)

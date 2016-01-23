@@ -62,6 +62,7 @@ func main() {
 
 	for _, layer := range []string{
 		"stand",
+		"jump",
 		"run1",
 		"run2",
 		"run3",
