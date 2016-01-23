@@ -10,6 +10,8 @@ import (
 )
 
 func main() {
+	sdl.SetHint(sdl.HINT_RENDER_VSYNC, "1")
+
 	check(sdl.Init(sdl.INIT_EVERYTHING))
 	defer sdl.Quit()
 
@@ -31,6 +33,7 @@ func main() {
 	defer renderer.Destroy()
 	defer window.Destroy()
 	window.SetTitle("Gophette's Adventures")
+	sdl.ShowCursor(0)
 
 	window.SetFullscreen(sdl.WINDOW_FULLSCREEN_DESKTOP)
 	fullscreen := true
@@ -46,15 +49,17 @@ func main() {
 		for e := sdl.PollEvent(); e != nil; e = sdl.PollEvent() {
 			switch event := e.(type) {
 			case *sdl.KeyDownEvent:
-				switch event.Keysym.Sym {
-				case sdl.K_LEFT:
-					game.HandleInput(InputEvent{GoLeft, true})
-				case sdl.K_RIGHT:
-					game.HandleInput(InputEvent{GoRight, true})
-				case sdl.K_UP:
-					game.HandleInput(InputEvent{Jump, true})
-				case sdl.K_ESCAPE:
-					game.HandleInput(InputEvent{QuitGame, true})
+				if event.Repeat == 0 {
+					switch event.Keysym.Sym {
+					case sdl.K_LEFT:
+						game.HandleInput(InputEvent{GoLeft, true})
+					case sdl.K_RIGHT:
+						game.HandleInput(InputEvent{GoRight, true})
+					case sdl.K_UP:
+						game.HandleInput(InputEvent{Jump, true})
+					case sdl.K_ESCAPE:
+						game.HandleInput(InputEvent{QuitGame, true})
+					}
 				}
 			case *sdl.KeyUpEvent:
 				switch event.Keysym.Sym {
@@ -86,12 +91,14 @@ func main() {
 
 		now := time.Now()
 		dt := now.Sub(lastUpdate)
-		if dt > frameTime {
-			game.Update()
-			lastUpdate = now
-		}
+		// TODO make sure the animations are not all jittery
+		_ = dt
+		//if dt > frameTime {
+		game.Update()
+		//lastUpdate = now
+		//}
 
-		renderer.SetDrawColor(0, 0, 0, 255)
+		renderer.SetDrawColor(255, 255, 255, 255)
 		renderer.Clear()
 		game.Render()
 		renderer.Present()

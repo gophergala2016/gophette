@@ -1,9 +1,12 @@
 package main
 
 const (
-	HeroAccelerationX = 2
-	HeroDecelerationX = 1
-	HeroMaxSpeedX     = 10
+	HeroAccelerationX     = 2
+	HeroDecelerationX     = 1
+	HeroMaxSpeedX         = 10
+	HeroInitialJumpSpeedY = -25
+	HeroHighGravity       = 2
+	HeroLowGravity        = 1
 
 	HeroRunFrameDelay = 4
 )
@@ -13,6 +16,8 @@ type Hero struct {
 	X, Y      int
 	SpeedX    int
 	SpeedY    int
+
+	InAir bool
 
 	runFrames     [DirectionCount][3]Image
 	jumpFrames    [DirectionCount]Image
@@ -42,16 +47,19 @@ func NewHero(assets AssetLoader) *Hero {
 }
 
 func (h *Hero) Render() {
-	// the order of animation images is 0,1,0,2  0,1,0,2  0,1 ...
-	frameIndex := h.runFrameIndex
-	if frameIndex == 2 {
-		frameIndex = 0
+	if h.InAir {
+		h.jumpFrames[h.Direction].DrawAt(h.X, h.Y)
+	} else {
+		// the order of animation images is 0,1,0,2  0,1,0,2  0,1 ...
+		frameIndex := h.runFrameIndex
+		if frameIndex == 2 {
+			frameIndex = 0
+		}
+		if frameIndex == 3 {
+			frameIndex = 2
+		}
+		h.runFrames[h.Direction][frameIndex].DrawAt(h.X, h.Y)
 	}
-	if frameIndex == 3 {
-		frameIndex = 2
-	}
-
-	h.runFrames[h.Direction][frameIndex].DrawAt(h.X, h.Y)
 }
 
 func (h *Hero) Update() {
@@ -73,5 +81,14 @@ func (h *Hero) Update() {
 		}
 	}
 
+	h.InAir = true
+
 	h.X += h.SpeedX
+	h.Y += h.SpeedY
+
+	if h.Y > 800 {
+		h.Y = 800
+		h.SpeedY = 0
+		h.InAir = false
+	}
 }
