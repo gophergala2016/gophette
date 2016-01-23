@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/disintegration/imaging"
 	"github.com/gonutz/xcf"
 	"github.com/nfnt/resize"
@@ -13,46 +14,95 @@ import (
 	"strings"
 )
 
+const scale = 0.33
+
 type ResourceMap map[string][]byte
 
 func main() {
 	resources := make(ResourceMap)
+	constants := bytes.NewBuffer(nil)
 
 	gophette, err := xcf.LoadFromFile("./gophette.xcf")
 	check(err)
-	for i := range gophette.Layers {
-		if gophette.Layers[i].Visible {
-			small := scaleImage(gophette.Layers[i])
 
-			buffer := bytes.NewBuffer(nil)
-			check(png.Encode(buffer, small))
-			resources["gophette_left_"+gophette.Layers[i].Name] = buffer.Bytes()
+	// create the collision information
+	collision := gophette.GetLayerByName("collision")
+	left, top := findTopLeftNonTransparentPixel(collision)
+	right, bottom := findBottomRightNonTransparentPixel(collision)
+	// scale the collision rect just like the images
+	left = int(0.5 + scale*float64(left))
+	top = int(0.5 + scale*float64(top))
+	right = int(0.5 + scale*float64(right))
+	bottom = int(0.5 + scale*float64(bottom))
+	width, height := right-left+1, bottom-top+1
+	line := fmt.Sprintf(
+		"var HeroCollisionRect = Rectangle{%v, %v, %v, %v}\n",
+		left, top, width, height,
+	)
+	constants.WriteString(line)
 
-			buffer = bytes.NewBuffer(nil)
-			check(png.Encode(buffer, imaging.FlipH(small)))
-			resources["gophette_right_"+gophette.Layers[i].Name] = buffer.Bytes()
-		}
+	// create the image resources
+	for _, layer := range []string{
+		"jump",
+		"run1",
+		"run2",
+		"run3",
+	} {
+		small := scaleImage(gophette.GetLayerByName(layer))
+
+		buffer := bytes.NewBuffer(nil)
+		check(png.Encode(buffer, small))
+		resources["gophette_left_"+layer] = buffer.Bytes()
+
+		buffer = bytes.NewBuffer(nil)
+		check(png.Encode(buffer, imaging.FlipH(small)))
+		resources["gophette_right_"+layer] = buffer.Bytes()
 	}
 
-	ioutil.WriteFile("../resources.go", toGoFile(resources), 0777)
+	content := toGoFile(resources, string(constants.Bytes()))
+	ioutil.WriteFile("../resources.go", content, 0777)
+}
+
+func findTopLeftNonTransparentPixel(img image.Image) (x, y int) {
+	for y := img.Bounds().Min.Y; y < img.Bounds().Max.Y; y++ {
+		for x := img.Bounds().Min.X; x < img.Bounds().Max.X; x++ {
+			_, _, _, a := img.At(x, y).RGBA()
+			if a != 0 {
+				return x, y
+			}
+		}
+	}
+	return -1, -1
+}
+
+func findBottomRightNonTransparentPixel(img image.Image) (x, y int) {
+	for y := img.Bounds().Max.Y - 1; y >= img.Bounds().Min.Y; y-- {
+		for x := img.Bounds().Max.X - 1; x >= img.Bounds().Min.X; x-- {
+			_, _, _, a := img.At(x, y).RGBA()
+			if a != 0 {
+				return x, y
+			}
+		}
+	}
+	return -1, -1
 }
 
 func scaleImage(img image.Image) image.Image {
-	const factor = 0.33
 	return resize.Resize(
-		uint(0.5+factor*float64(img.Bounds().Dx())),
-		uint(0.5+factor*float64(img.Bounds().Dy())),
+		uint(0.5+scale*float64(img.Bounds().Dx())),
+		uint(0.5+scale*float64(img.Bounds().Dy())),
 		img,
 		resize.Bicubic,
 	)
 }
 
-func toGoFile(resources ResourceMap) []byte {
+func toGoFile(resources ResourceMap, constants string) []byte {
 	buffer := bytes.NewBuffer(nil)
 	buffer.WriteString(`package main
 
 // NOTE this file is generated, do not edit it
 
+` + constants + `
 var Resources = map[string][]byte{`)
 
 	var table sortableResourceEntries
