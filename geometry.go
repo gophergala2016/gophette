@@ -17,6 +17,10 @@ func (r Rectangle) Overlaps(o Rectangle) bool {
 		o.X+o.W > r.X && o.Y+o.H > r.Y
 }
 
+func (r Rectangle) Center() (x, y int) {
+	return r.X + r.W/2, r.Y + r.H/2
+}
+
 type Point struct {
 	X, Y int
 }

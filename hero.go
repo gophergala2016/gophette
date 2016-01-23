@@ -1,10 +1,13 @@
 package main
 
+// maximum jump height is currently 253
+
 const (
 	HeroAccelerationX     = 2
 	HeroDecelerationX     = 1
 	HeroMaxSpeedX         = 10
-	HeroInitialJumpSpeedY = -22
+	HeroMaxSpeedY         = 32
+	HeroInitialJumpSpeedY = -23
 	HeroHighGravity       = 2
 	HeroLowGravity        = 1
 
@@ -79,9 +82,11 @@ func (h *Hero) Render() {
 
 type Collider interface {
 	MoveInX(bounds Rectangle, dx int) (newBounds Rectangle, collided bool)
+	MoveInY(bounds Rectangle, dy int) (newBounds Rectangle, collided bool)
 }
 
 func (h *Hero) Update(collider Collider) {
+	// face the way of the horizonal speed
 	if h.SpeedX < 0 {
 		h.Direction = LeftDirectionIndex
 	}
@@ -90,7 +95,8 @@ func (h *Hero) Update(collider Collider) {
 	}
 
 	// NOTE putting this code AFTER the collision detection will not have her
-	// run while stuck in a wall
+	// run while stuck in a wall; BEFORE the collision detection will keep the
+	// running animation while hitting the wall
 	if h.SpeedX == 0 {
 		h.runFrameIndex = 0
 		h.nextRunFrame = 0
@@ -102,15 +108,27 @@ func (h *Hero) Update(collider Collider) {
 		}
 	}
 
+	// Move in Y first, this assures that you land on a platform even if it is
+	// at the maximum jump height; in this case you move up above the platform,
+	// then you move in X in the next step and land on the platform.
+	// Were it the other way round would mean moving in X, hitting the platform,
+	// then moving in Y above the platform but to the side of it
 	var collided bool
+	h.InAir = true // assume this until proven otherwise
+	h.Position, collided = collider.MoveInY(h.Position, h.SpeedY)
+	if collided {
+		if h.SpeedY > 0 {
+			// if she was going down, she now landed on the ground
+			h.InAir = false
+		}
+		h.SpeedY = 0
+	}
+
+	// move in X
 	h.Position, collided = collider.MoveInX(h.Position, h.SpeedX)
 	if collided {
 		h.SpeedX = 0
 	}
-
-	// TODO collide correctly in Y as well
-	h.InAir = true // assume this until proven otherwise
-	h.Position.Y += h.SpeedY
 
 	if h.Position.Y+h.Position.H > 800 {
 		h.Position.Y = 800 - h.Position.H

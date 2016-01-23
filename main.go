@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/sdl_image"
 	"github.com/veandco/go-sdl2/sdl_mixer"
@@ -38,9 +37,11 @@ func main() {
 	window.SetFullscreen(sdl.WINDOW_FULLSCREEN_DESKTOP)
 	fullscreen := true
 
-	assetLoader := newSDLAssetLoader(renderer)
+	camera := newSDLCamera(window.GetSize())
+
+	assetLoader := newSDLAssetLoader(camera, renderer)
 	defer assetLoader.close()
-	game := NewGame(assetLoader, sdlGraphics{renderer})
+	game := NewGame(assetLoader, &sdlGraphics{renderer, camera}, camera)
 
 	frameTime := time.Second / 60
 	lastUpdate := time.Now().Add(-frameTime)
@@ -82,7 +83,7 @@ func main() {
 			case *sdl.WindowEvent:
 				if event.Event == sdl.WINDOWEVENT_SIZE_CHANGED {
 					width, height := int(event.Data1), int(event.Data2)
-					fmt.Println("size:", width, height)
+					camera.setWindowSize(width, height)
 				}
 			case *sdl.QuitEvent:
 				game.HandleInput(InputEvent{QuitGame, true})
@@ -113,12 +114,14 @@ func check(err error) {
 
 type textureImage struct {
 	renderer *sdl.Renderer
+	camera   *sdlCamera
 	texture  *sdl.Texture
 }
 
 func (img *textureImage) DrawAt(x, y int) {
 	_, _, w, h, _ := img.texture.Query()
-	dest := sdl.Rect{int32(x), int32(y), w, h}
+	dx, dy := img.camera.offset()
+	dest := sdl.Rect{int32(x + dx), int32(y + dy), w, h}
 	img.renderer.Copy(img.texture, nil, &dest)
 }
 
@@ -128,12 +131,14 @@ func (img *textureImage) Size() (int, int) {
 }
 
 type sdlAssetLoader struct {
+	camera   *sdlCamera
 	renderer *sdl.Renderer
 	images   map[string]*textureImage
 }
 
-func newSDLAssetLoader(renderer *sdl.Renderer) *sdlAssetLoader {
+func newSDLAssetLoader(cam *sdlCamera, renderer *sdl.Renderer) *sdlAssetLoader {
 	return &sdlAssetLoader{
+		camera:   cam,
 		renderer: renderer,
 		images:   make(map[string]*textureImage),
 	}
@@ -154,7 +159,7 @@ func (l *sdlAssetLoader) LoadImage(id string) Image {
 	defer surface.Free()
 	texture, err := l.renderer.CreateTextureFromSurface(surface)
 	check(err)
-	image := &textureImage{l.renderer, texture}
+	image := &textureImage{l.renderer, l.camera, texture}
 	l.images[id] = image
 
 	return image
@@ -168,10 +173,38 @@ func (l *sdlAssetLoader) close() {
 
 type sdlGraphics struct {
 	renderer *sdl.Renderer
+	camera   *sdlCamera
 }
 
-func (graphics sdlGraphics) FillRect(rect Rectangle, r, g, b, a uint8) {
+func (graphics *sdlGraphics) FillRect(rect Rectangle, r, g, b, a uint8) {
 	graphics.renderer.SetDrawColor(r, g, b, a)
+	rect = rect.MoveBy(graphics.camera.offset())
 	sdlRect := sdl.Rect{int32(rect.X), int32(rect.Y), int32(rect.W), int32(rect.H)}
 	graphics.renderer.FillRect(&sdlRect)
+}
+
+type sdlCamera struct {
+	position Rectangle
+}
+
+func newSDLCamera(windowW, windowH int) *sdlCamera {
+	cam := &sdlCamera{}
+	cam.setWindowSize(windowW, windowH)
+	return cam
+}
+
+func (cam *sdlCamera) setWindowSize(w, h int) {
+	cx, cy := cam.position.Center()
+	cam.position.W, cam.position.H = w, h
+	cam.CenterAround(cx, cy)
+}
+
+func (cam *sdlCamera) CenterAround(x, y int) {
+	cam.position.X = x - cam.position.W
+	cam.position.Y = y - cam.position.H
+}
+
+func (cam *sdlCamera) offset() (dx, dy int) {
+	return -(cam.position.X + cam.position.W/2),
+		-(cam.position.Y + cam.position.H/2)
 }

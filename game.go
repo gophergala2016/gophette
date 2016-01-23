@@ -2,6 +2,7 @@ package main
 
 type Game struct {
 	graphics Graphics
+	camera   Camera
 
 	running bool
 	hero    *Hero
@@ -14,15 +15,29 @@ type Game struct {
 	objects []CollisionObject
 }
 
-func NewGame(assets AssetLoader, graphics Graphics) *Game {
+type Camera interface {
+	CenterAround(x, y int)
+}
+
+func NewGame(assets AssetLoader, graphics Graphics, cam Camera) *Game {
 	hero := NewHero(assets)
-	hero.SetBottomCenterTo(100, 799)
+	hero.SetBottomCenterTo(380, -900)
 	hero.Direction = RightDirectionIndex
 
 	objects := []CollisionObject{
-		{Rectangle{0, -10000, 1, 20000}},   // left wall
-		{Rectangle{800, -10000, 1, 20000}}, // right wall
-		{Rectangle{0, 800, 2000, 50}},
+		{Rectangle{10, -10000, 1, 20000}},   // left wall
+		{Rectangle{1998, -10000, 1, 20000}}, // right wall
+		{Rectangle{0, 800, 2000, 50}},       // floor
+
+		{Rectangle{400, 610, 200, 50}},
+		{Rectangle{800, 420, 200, 50}},
+		{Rectangle{380, 230, 200, 50}},
+		{Rectangle{820, 40, 200, 50}},
+		{Rectangle{360, -150, 200, 50}},
+		{Rectangle{840, -340, 200, 50}},
+		{Rectangle{340, -530, 200, 50}},
+		{Rectangle{100, -783, 200, 50}}, // max jump height is 253
+		{Rectangle{300, -783 - 253, 200, 50}},
 	}
 
 	return &Game{
@@ -30,6 +45,7 @@ func NewGame(assets AssetLoader, graphics Graphics) *Game {
 		graphics: graphics,
 		hero:     hero,
 		objects:  objects,
+		camera:   cam,
 	}
 }
 
@@ -95,8 +111,13 @@ func (g *Game) Update() {
 	} else {
 		g.hero.SpeedY += HeroHighGravity
 	}
+	if g.hero.SpeedY > HeroMaxSpeedY {
+		g.hero.SpeedY = HeroMaxSpeedY
+	}
 
 	g.hero.Update(g)
+
+	g.camera.CenterAround(g.hero.Position.Center())
 }
 
 func (g *Game) MoveInX(bounds Rectangle, dx int) (newBounds Rectangle, collided bool) {
@@ -128,6 +149,38 @@ func (g *Game) MoveInX(bounds Rectangle, dx int) (newBounds Rectangle, collided 
 			}
 		}
 		newBounds = bounds.MoveTo(moveSpace.X+moveSpace.W-bounds.W, moveSpace.Y)
+	}
+	return
+}
+
+func (g *Game) MoveInY(bounds Rectangle, dy int) (newBounds Rectangle, collided bool) {
+	// this works analogous to MoveInX
+	newBounds = bounds.MoveBy(0, dy)
+	if dy < 0 {
+		moveSpace := bounds
+		moveSpace.Y += dy
+		moveSpace.H -= dy // make it higher, dy is negative
+		for i := range g.objects {
+			if g.objects[i].Bounds.Overlaps(moveSpace) {
+				collided = true
+				overlap := g.objects[i].Bounds.Y + g.objects[i].Bounds.H - moveSpace.Y
+				moveSpace.Y += overlap
+				moveSpace.H -= overlap
+			}
+		}
+		newBounds = bounds.MoveTo(moveSpace.X, moveSpace.Y)
+	}
+	if dy > 0 {
+		moveSpace := bounds
+		moveSpace.H += dy
+		for i := range g.objects {
+			if g.objects[i].Bounds.Overlaps(moveSpace) {
+				collided = true
+				overlap := moveSpace.Y + moveSpace.H - g.objects[i].Bounds.Y
+				moveSpace.H -= overlap
+			}
+		}
+		newBounds = bounds.MoveTo(moveSpace.X, moveSpace.Y+moveSpace.H-bounds.H)
 	}
 	return
 }
