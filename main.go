@@ -30,13 +30,32 @@ func main() {
 	defer window.Destroy()
 	window.SetTitle("Gophette's Adventures")
 
-	running := true
-	for running {
+	game := NewGame(dummyAssetLoader{})
+
+	for game.Running() {
 		for e := sdl.PollEvent(); e != nil; e = sdl.PollEvent() {
 			switch event := e.(type) {
 			case *sdl.KeyDownEvent:
-				if event.Keysym.Sym == sdl.K_ESCAPE {
-					running = false
+				switch event.Keysym.Sym {
+				case sdl.K_LEFT:
+					game.HandleInput(InputEvent{GoLeft, true})
+				case sdl.K_RIGHT:
+					game.HandleInput(InputEvent{GoRight, true})
+				case sdl.K_UP:
+					game.HandleInput(InputEvent{Jump, true})
+				case sdl.K_ESCAPE:
+					game.HandleInput(InputEvent{QuitGame, true})
+				}
+			case *sdl.KeyUpEvent:
+				switch event.Keysym.Sym {
+				case sdl.K_LEFT:
+					game.HandleInput(InputEvent{GoLeft, false})
+				case sdl.K_RIGHT:
+					game.HandleInput(InputEvent{GoRight, false})
+				case sdl.K_UP:
+					game.HandleInput(InputEvent{Jump, false})
+				case sdl.K_ESCAPE:
+					game.HandleInput(InputEvent{QuitGame, false})
 				}
 			case *sdl.WindowEvent:
 				if event.Event == sdl.WINDOWEVENT_SIZE_CHANGED {
@@ -44,7 +63,7 @@ func main() {
 					fmt.Println("size:", width, height)
 				}
 			case *sdl.QuitEvent:
-				running = false
+				game.HandleInput(InputEvent{QuitGame, true})
 			}
 		}
 	}
@@ -54,4 +73,10 @@ func check(err error) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+type dummyAssetLoader struct{}
+
+func (dummyAssetLoader) LoadImage(string) Image {
+	return nil
 }
