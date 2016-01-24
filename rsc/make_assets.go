@@ -88,6 +88,18 @@ func main() {
 		resources[layer] = imageToBytes(grass.GetLayerByName(layer))
 	}
 
+	ground, err := xcf.LoadFromFile("./ground.xcf")
+	check(err)
+	for _, layer := range []string{
+		"ground left",
+		"ground right",
+		"ground center 1",
+		"ground center 2",
+		"ground center 3",
+	} {
+		resources[layer] = imageToBytes(ground.GetLayerByName(layer))
+	}
+
 	tree, err := xcf.LoadFromFile("./tree.xcf")
 	check(err)
 	smallTree := scaleImage(tree.GetLayerByName("small"))

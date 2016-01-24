@@ -32,14 +32,14 @@ func NewGame(
 	cameraFocusCharIndex int,
 ) *Game {
 	hero := NewHero(assets)
-	hero.SetBottomCenterTo(100, 800)
+	hero.SetBottomCenterTo(400, 500)
 	hero.Direction = RightDirectionIndex
 
 	barney := NewBarney(assets)
-	barney.SetBottomCenterTo(100, 800)
+	barney.SetBottomCenterTo(300, 500)
 	barney.Direction = RightDirectionIndex
 
-	cam.SetBounds(Rectangle{0, -1399, 2500, 2200})
+	cam.SetBounds(Rectangle{200, -1399, 2500, 2200})
 
 	game := &Game{
 		running:          true,
@@ -251,13 +251,13 @@ func (g *Game) Running() bool {
 }
 
 func (g *Game) Render() {
-	for i := range g.objects {
-		if g.objects[i].Solidness == Solid {
-			g.graphics.FillRect(g.objects[i].Bounds, 30, 98, 98, 255)
-		} else {
-			g.graphics.FillRect(g.objects[i].Bounds, 133, 98, 98, 255)
-		}
-	}
+	//for i := range g.objects {
+	//	if g.objects[i].Solidness == Solid {
+	//		g.graphics.FillRect(g.objects[i].Bounds, 30, 98, 98, 255)
+	//	} else {
+	//		g.graphics.FillRect(g.objects[i].Bounds, 133, 98, 98, 255)
+	//	}
+	//}
 
 	for i := range g.imageObjects {
 		g.imageObjects[i].Render()

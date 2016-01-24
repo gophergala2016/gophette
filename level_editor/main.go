@@ -203,6 +203,8 @@ func main() {
 					}
 				case sdl.K_PLUS:
 					last := len(images) - 1
+					fmt.Println("last", last, len(images))
+					fmt.Println("selectedImage", selectedImage)
 					if selectedImage != -1 && selectedImage != last {
 						images = append(append(
 							images[0:selectedImage],
@@ -210,6 +212,7 @@ func main() {
 							images[selectedImage],
 						)
 						selectedImage = last
+						fmt.Println("selectedImage after", selectedImage)
 					}
 				case sdl.K_SPACE:
 					if selectedObject != -1 {
