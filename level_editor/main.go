@@ -384,10 +384,8 @@ func saveLevel() {
 	buffer.WriteString(`package main
 
 var level1 = Level{
-	[]LevelObject{` + objectsToString() + `
-	},
-	[]LevelImage{` + imagesToString() + `
-	},
+	[]LevelObject{` + objectsToString() + `},
+	[]LevelImage{` + imagesToString() + `},
 }
 `)
 	ioutil.WriteFile("../level1.go", buffer.Bytes(), 0777)

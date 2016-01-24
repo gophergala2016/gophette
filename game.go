@@ -58,7 +58,7 @@ func NewGame(
 	barney.SetBottomCenterTo(300, 537)
 	barney.Direction = RightDirectionIndex
 
-	cameraBounds := Rectangle{200, -1399, 25000, 2100}
+	cameraBounds := Rectangle{200, -1399, 9200, 2100}
 	cam.SetBounds(cameraBounds)
 
 	game := &Game{

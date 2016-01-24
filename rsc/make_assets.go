@@ -88,6 +88,16 @@ func main() {
 		resources[layer] = imageToBytes(grass.GetLayerByName(layer))
 	}
 
+	grassLong, err := xcf.LoadFromFile("./grass_long.xcf")
+	check(err)
+	for _, layer := range []string{
+		"grass long 1",
+		"grass long 2",
+		"grass long 3",
+	} {
+		resources[layer] = imageToBytes(grassLong.GetLayerByName(layer))
+	}
+
 	ground, err := xcf.LoadFromFile("./ground.xcf")
 	check(err)
 	for _, layer := range []string{
@@ -99,6 +109,19 @@ func main() {
 	} {
 		resources[layer] = imageToBytes(ground.GetLayerByName(layer))
 	}
+
+	groundLong, err := xcf.LoadFromFile("./ground_long.xcf")
+	check(err)
+	for _, layer := range []string{
+		"ground long 1",
+		"ground long 2",
+	} {
+		resources[layer] = imageToBytes(groundLong.GetLayerByName(layer))
+	}
+
+	rock, err := xcf.LoadFromFile("./rock.xcf")
+	check(err)
+	resources["square rock"] = imageToBytes(scaleImage(rock.GetLayerByName("rock")))
 
 	tree, err := xcf.LoadFromFile("./tree.xcf")
 	check(err)
