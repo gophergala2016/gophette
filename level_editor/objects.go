@@ -8,6 +8,6 @@ type LevelObject struct {
 var LevelObjects = []LevelObject{
 	{214, 537, 1106, 42, true},
 	{596, 364, 142, 34, false},
-	{907, 261, 160, 36, false},
-	{1360, 688, 178, 49, false},
+	{904, 263, 145, 36, false},
+	{1379, 731, 178, 49, false},
 }
