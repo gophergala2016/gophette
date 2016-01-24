@@ -9,7 +9,8 @@ type Game struct {
 	inputStates      [2]inputState
 	primaryCharIndex int
 
-	objects []CollisionObject
+	objects      []CollisionObject
+	imageObjects []ImageObject
 }
 
 type Camera interface {
@@ -43,7 +44,7 @@ func NewGame(
 		{Rectangle{1999, -10000, 1, 20000}, Solid}, // right wall
 		{Rectangle{0, 800, 2000, 50}, Solid},       // floor
 
-		{Rectangle{400, 610, 200, 50}, TopSolid},
+		{Rectangle{385, 610, 253, 50}, TopSolid},
 		{Rectangle{800, 420, 200, 50}, TopSolid},
 		{Rectangle{380, 230, 200, 50}, TopSolid},
 		{Rectangle{820, 40, 200, 50}, TopSolid},
@@ -56,6 +57,15 @@ func NewGame(
 		{Rectangle{1840, -840, 50, 1000}, Solid},
 	}
 
+	y := 600
+	imageObjects := []ImageObject{
+		{assets.LoadImage("grass left"), 370, y},
+		{assets.LoadImage("grass center 1"), 422, y},
+		{assets.LoadImage("grass center 2"), 475, y},
+		{assets.LoadImage("grass center 3"), 528, y},
+		{assets.LoadImage("grass right"), 583, y},
+	}
+
 	cam.SetBounds(Rectangle{0, -1399, 2000, 2200})
 
 	return &Game{
@@ -64,6 +74,7 @@ func NewGame(
 		characters:       [2]*Character{hero, barney},
 		primaryCharIndex: cameraFocusCharIndex,
 		objects:          objects,
+		imageObjects:     imageObjects,
 		camera:           cam,
 	}
 }
@@ -247,8 +258,13 @@ func (g *Game) Render() {
 		if g.objects[i].Solidness == Solid {
 			g.graphics.FillRect(g.objects[i].Bounds, 255, 0, 0, 255)
 		} else {
-			g.graphics.FillRect(g.objects[i].Bounds, 0, 192, 0, 255)
+			g.graphics.FillRect(g.objects[i].Bounds, 133, 98, 98, 255)
+			//g.graphics.FillRect(g.objects[i].Bounds, 0, 192, 0, 255)
 		}
+	}
+
+	for i := range g.imageObjects {
+		g.imageObjects[i].Render()
 	}
 
 	g.characters[1].Render()
