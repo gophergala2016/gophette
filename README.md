@@ -16,7 +16,10 @@ To install under OS X you can do this:
     brew install sdl2_ttf
     brew install --with-libvorbis sdl2_mixer
     brew install sdl2_image
-    go get -v github.com/veandco/go-sdl2/...
+    go get -v github.com/veandco/go-sdl2/sdl
+    go get -v github.com/veandco/go-sdl2/sdl_image
+    go get -v github.com/veandco/go-sdl2/sdl_mixer
+    go get -v github.com/veandco/go-sdl2/sdl_ttf
 
 You need to have a C compiler installed for that so if you are on Windows you need [MinGW](http://sourceforge.net/projects/mingw/files/) installed as well.
 
