@@ -41,7 +41,24 @@ func main() {
 
 	assetLoader := newSDLAssetLoader(camera, renderer)
 	defer assetLoader.close()
-	game := NewGame(assetLoader, &sdlGraphics{renderer, camera}, camera)
+
+	// charIndex selects which character is being controlled by the user, for
+	// the final game this must be 0 but for creating the "AI" for Barney, set
+	// this to 1 and delete the recorded inputs so they are not applied
+	// additionally to the user controls
+
+	// NOTE either this
+	const charIndex = 0
+	// NOTE or these
+	//const charIndex = 1
+	//recordedInputs = recordedInputs[:0]
+
+	game := NewGame(
+		assetLoader,
+		&sdlGraphics{renderer, camera},
+		camera,
+		charIndex,
+	)
 
 	frameTime := time.Second / 60
 	lastUpdate := time.Now().Add(-frameTime)
@@ -53,23 +70,23 @@ func main() {
 				if event.Repeat == 0 {
 					switch event.Keysym.Sym {
 					case sdl.K_LEFT:
-						game.HandleInput(InputEvent{GoLeft, true})
+						game.HandleInput(InputEvent{GoLeft, true, charIndex})
 					case sdl.K_RIGHT:
-						game.HandleInput(InputEvent{GoRight, true})
+						game.HandleInput(InputEvent{GoRight, true, charIndex})
 					case sdl.K_UP:
-						game.HandleInput(InputEvent{Jump, true})
+						game.HandleInput(InputEvent{Jump, true, charIndex})
 					case sdl.K_ESCAPE:
-						game.HandleInput(InputEvent{QuitGame, true})
+						game.HandleInput(InputEvent{QuitGame, true, charIndex})
 					}
 				}
 			case *sdl.KeyUpEvent:
 				switch event.Keysym.Sym {
 				case sdl.K_LEFT:
-					game.HandleInput(InputEvent{GoLeft, false})
+					game.HandleInput(InputEvent{GoLeft, false, charIndex})
 				case sdl.K_RIGHT:
-					game.HandleInput(InputEvent{GoRight, false})
+					game.HandleInput(InputEvent{GoRight, false, charIndex})
 				case sdl.K_UP:
-					game.HandleInput(InputEvent{Jump, false})
+					game.HandleInput(InputEvent{Jump, false, charIndex})
 				case sdl.K_F11:
 					if fullscreen {
 						window.SetFullscreen(0)
@@ -78,7 +95,7 @@ func main() {
 					}
 					fullscreen = !fullscreen
 				case sdl.K_ESCAPE:
-					game.HandleInput(InputEvent{QuitGame, false})
+					game.HandleInput(InputEvent{QuitGame, false, charIndex})
 				}
 			case *sdl.WindowEvent:
 				if event.Event == sdl.WINDOWEVENT_SIZE_CHANGED {
@@ -86,7 +103,7 @@ func main() {
 					camera.setWindowSize(width, height)
 				}
 			case *sdl.QuitEvent:
-				game.HandleInput(InputEvent{QuitGame, true})
+				game.HandleInput(InputEvent{QuitGame, true, charIndex})
 			}
 		}
 

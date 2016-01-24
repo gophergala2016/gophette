@@ -1,8 +1,9 @@
 package main
 
 type InputEvent struct {
-	Action  InputAction
-	Pressed bool
+	Action         InputAction
+	Pressed        bool
+	CharacterIndex int
 }
 
 type InputAction int

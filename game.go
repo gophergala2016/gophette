@@ -4,13 +4,10 @@ type Game struct {
 	graphics Graphics
 	camera   Camera
 
-	running bool
-	hero    *Character
-
-	leftDown          bool
-	rightDown         bool
-	jumpDown          bool
-	mustJumpThisFrame bool
+	running          bool
+	characters       [2]*Character
+	inputStates      [2]inputState
+	primaryCharIndex int
 
 	objects []CollisionObject
 }
@@ -20,12 +17,26 @@ type Camera interface {
 	SetBounds(Rectangle)
 }
 
-func NewGame(assets AssetLoader, graphics Graphics, cam Camera) *Game {
-	//hero := NewHero(assets)
-	hero := NewBarney(assets) // TODO
+type inputState struct {
+	leftDown          bool
+	rightDown         bool
+	jumpDown          bool
+	mustJumpThisFrame bool
+}
 
+func NewGame(
+	assets AssetLoader,
+	graphics Graphics,
+	cam Camera,
+	cameraFocusCharIndex int,
+) *Game {
+	hero := NewHero(assets)
 	hero.SetBottomCenterTo(100, 800)
 	hero.Direction = RightDirectionIndex
+
+	barney := NewBarney(assets)
+	barney.SetBottomCenterTo(100, 800)
+	barney.Direction = RightDirectionIndex
 
 	objects := []CollisionObject{
 		{Rectangle{0, -10000, 1, 20000}},    // left wall
@@ -48,28 +59,29 @@ func NewGame(assets AssetLoader, graphics Graphics, cam Camera) *Game {
 	cam.SetBounds(Rectangle{0, -1399, 2000, 2200})
 
 	return &Game{
-		running:  true,
-		graphics: graphics,
-		hero:     hero,
-		objects:  objects,
-		camera:   cam,
+		running:          true,
+		graphics:         graphics,
+		characters:       [2]*Character{hero, barney},
+		primaryCharIndex: cameraFocusCharIndex,
+		objects:          objects,
+		camera:           cam,
 	}
 }
 
 func (g *Game) HandleInput(event InputEvent) {
-	if recordingInput {
-		inputs = append(inputs, inputRecord{frame: frame, event: event})
-	}
+	recordInput(event)
+
+	inputState := &g.inputStates[event.CharacterIndex]
 
 	if event.Action == GoLeft {
-		g.leftDown = event.Pressed
+		inputState.leftDown = event.Pressed
 	}
 	if event.Action == GoRight {
-		g.rightDown = event.Pressed
+		inputState.rightDown = event.Pressed
 	}
 	if event.Action == Jump {
-		g.mustJumpThisFrame = event.Pressed
-		g.jumpDown = event.Pressed
+		inputState.mustJumpThisFrame = event.Pressed
+		inputState.jumpDown = event.Pressed
 	}
 
 	if event.Action == QuitGame {
@@ -81,39 +93,51 @@ func (g *Game) HandleInput(event InputEvent) {
 }
 
 func (g *Game) Update() {
-	if replayingInput {
-		for len(inputs) > 0 && inputs[0].frame == frame {
-			g.HandleInput(inputs[0].event)
-			inputs = inputs[1:]
+	for len(recordedInputs) > 0 && recordedInputs[0].frame == frame {
+		if recordedInputs[0].event.Action != QuitGame {
+			recordedInputs[0].event.CharacterIndex = 1
+			g.HandleInput(recordedInputs[0].event)
 		}
+		recordedInputs = recordedInputs[1:]
 	}
+
 	frame++
 
-	// decelerate the hero to 0
-	if g.hero.SpeedX > 0 {
-		g.hero.SpeedX -= g.hero.Params.DecelerationX
-		if g.hero.SpeedX < 0 {
-			g.hero.SpeedX = 0
+	g.updateCharacter(0)
+	g.updateCharacter(1)
+
+	g.camera.CenterAround(g.characters[g.primaryCharIndex].Position.Center())
+}
+
+func (g *Game) updateCharacter(charIndex int) {
+	char := g.characters[charIndex]
+	inputState := &g.inputStates[charIndex]
+
+	// decelerate to 0
+	if char.SpeedX > 0 {
+		char.SpeedX -= char.Params.DecelerationX
+		if char.SpeedX < 0 {
+			char.SpeedX = 0
 		}
 	}
-	if g.hero.SpeedX < 0 {
-		g.hero.SpeedX += g.hero.Params.DecelerationX
-		if g.hero.SpeedX > 0 {
-			g.hero.SpeedX = 0
+	if char.SpeedX < 0 {
+		char.SpeedX += char.Params.DecelerationX
+		if char.SpeedX > 0 {
+			char.SpeedX = 0
 		}
 	}
 
-	// accelerate the hero if pressing left or right (exclusively)
-	if g.leftDown && !g.rightDown {
-		g.hero.SpeedX -= g.hero.Params.AccelerationX
-		if g.hero.SpeedX < -g.hero.Params.MaxSpeedX {
-			g.hero.SpeedX = -g.hero.Params.MaxSpeedX
+	// accelerate the character if pressing left or right (exclusively)
+	if inputState.leftDown && !inputState.rightDown {
+		char.SpeedX -= char.Params.AccelerationX
+		if char.SpeedX < -char.Params.MaxSpeedX {
+			char.SpeedX = -char.Params.MaxSpeedX
 		}
 	}
-	if g.rightDown && !g.leftDown {
-		g.hero.SpeedX += g.hero.Params.AccelerationX
-		if g.hero.SpeedX > g.hero.Params.MaxSpeedX {
-			g.hero.SpeedX = g.hero.Params.MaxSpeedX
+	if inputState.rightDown && !inputState.leftDown {
+		char.SpeedX += char.Params.AccelerationX
+		if char.SpeedX > char.Params.MaxSpeedX {
+			char.SpeedX = char.Params.MaxSpeedX
 		}
 	}
 
@@ -121,25 +145,23 @@ func (g *Game) Update() {
 	// If you press jump and keep holding it until you land, you should not
 	// launch into the next jump right away. Only when you release the jump
 	// button and press it again will you launch another jump
-	if g.mustJumpThisFrame && !g.hero.InAir {
-		g.hero.SpeedY = g.hero.Params.InitialJumpSpeedY
+	if inputState.mustJumpThisFrame && !char.InAir {
+		char.SpeedY = char.Params.InitialJumpSpeedY
 	}
-	g.mustJumpThisFrame = false
+	inputState.mustJumpThisFrame = false
 
-	goingUp := g.hero.SpeedY < 0
-	if goingUp && g.jumpDown {
+	goingUp := char.SpeedY < 0
+	if goingUp && inputState.jumpDown {
 		// make her jump higher if holding jump while going up
-		g.hero.SpeedY += g.hero.Params.LowGravity
+		char.SpeedY += char.Params.LowGravity
 	} else {
-		g.hero.SpeedY += g.hero.Params.HighGravity
+		char.SpeedY += char.Params.HighGravity
 	}
-	if g.hero.SpeedY > g.hero.Params.MaxSpeedY {
-		g.hero.SpeedY = g.hero.Params.MaxSpeedY
+	if char.SpeedY > char.Params.MaxSpeedY {
+		char.SpeedY = char.Params.MaxSpeedY
 	}
 
-	g.hero.Update(g)
-
-	g.camera.CenterAround(g.hero.Position.Center())
+	char.Update(g)
 }
 
 func (g *Game) MoveInX(bounds Rectangle, dx int) (newBounds Rectangle, collided bool) {
@@ -216,5 +238,6 @@ func (g *Game) Render() {
 		g.graphics.FillRect(g.objects[i].Bounds, 255, 0, 0, 255)
 	}
 
-	g.hero.Render()
+	g.characters[1].Render()
+	g.characters[0].Render()
 }
