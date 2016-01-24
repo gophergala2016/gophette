@@ -37,7 +37,7 @@ func main() {
 	window.SetFullscreen(sdl.WINDOW_FULLSCREEN_DESKTOP)
 	fullscreen := true
 
-	camera := newSDLCamera(window.GetSize())
+	camera := newWindowCamera(window.GetSize())
 
 	assetLoader := newSDLAssetLoader(camera, renderer)
 	defer assetLoader.close()
@@ -116,8 +116,8 @@ func main() {
 		//lastUpdate = now
 		//}
 
-		renderer.SetDrawColor(255, 255, 255, 255)
-		renderer.Clear()
+		check(renderer.SetDrawColor(255, 255, 255, 255))
+		check(renderer.Clear())
 		game.Render()
 		renderer.Present()
 	}
@@ -131,29 +131,31 @@ func check(err error) {
 
 type textureImage struct {
 	renderer *sdl.Renderer
-	camera   *sdlCamera
+	camera   *windowCamera
 	texture  *sdl.Texture
 }
 
 func (img *textureImage) DrawAt(x, y int) {
-	_, _, w, h, _ := img.texture.Query()
+	_, _, w, h, err := img.texture.Query()
+	check(err)
 	dx, dy := img.camera.offset()
 	dest := sdl.Rect{int32(x + dx), int32(y + dy), w, h}
-	img.renderer.Copy(img.texture, nil, &dest)
+	check(img.renderer.Copy(img.texture, nil, &dest))
 }
 
 func (img *textureImage) Size() (int, int) {
-	_, _, w, h, _ := img.texture.Query()
+	_, _, w, h, err := img.texture.Query()
+	check(err)
 	return int(w), int(h)
 }
 
 type sdlAssetLoader struct {
-	camera   *sdlCamera
+	camera   *windowCamera
 	renderer *sdl.Renderer
 	images   map[string]*textureImage
 }
 
-func newSDLAssetLoader(cam *sdlCamera, renderer *sdl.Renderer) *sdlAssetLoader {
+func newSDLAssetLoader(cam *windowCamera, renderer *sdl.Renderer) *sdlAssetLoader {
 	return &sdlAssetLoader{
 		camera:   cam,
 		renderer: renderer,
@@ -190,59 +192,12 @@ func (l *sdlAssetLoader) close() {
 
 type sdlGraphics struct {
 	renderer *sdl.Renderer
-	camera   *sdlCamera
+	camera   *windowCamera
 }
 
 func (graphics *sdlGraphics) FillRect(rect Rectangle, r, g, b, a uint8) {
-	graphics.renderer.SetDrawColor(r, g, b, a)
+	check(graphics.renderer.SetDrawColor(r, g, b, a))
 	rect = rect.MoveBy(graphics.camera.offset())
 	sdlRect := sdl.Rect{int32(rect.X), int32(rect.Y), int32(rect.W), int32(rect.H)}
-	graphics.renderer.FillRect(&sdlRect)
-}
-
-type sdlCamera struct {
-	position Rectangle
-	bounds   Rectangle
-}
-
-func newSDLCamera(windowW, windowH int) *sdlCamera {
-	cam := &sdlCamera{
-		// initially set no bounds (big integers)
-		bounds: Rectangle{-999999, -999999, 2 * 999999, 2 * 999999},
-	}
-	cam.setWindowSize(windowW, windowH)
-	return cam
-}
-
-func (cam *sdlCamera) setWindowSize(w, h int) {
-	cx, cy := cam.position.Center()
-	cam.position.W, cam.position.H = w, h
-	cam.CenterAround(cx, cy)
-}
-
-func (cam *sdlCamera) CenterAround(x, y int) {
-	cam.position.X = x - cam.position.W/2
-	cam.position.Y = y - cam.position.H/2
-
-	// keep the camera in the bounds
-	if cam.position.X < cam.bounds.X {
-		cam.position.X = cam.bounds.X
-	}
-	if cam.position.Y < cam.bounds.Y {
-		cam.position.Y = cam.bounds.Y
-	}
-	if cam.position.X+cam.position.W > cam.bounds.X+cam.bounds.W {
-		cam.position.X = cam.bounds.X + cam.bounds.W - cam.position.W
-	}
-	if cam.position.Y+cam.position.H > cam.bounds.Y+cam.bounds.H {
-		cam.position.Y = cam.bounds.Y + cam.bounds.H - cam.position.H
-	}
-}
-
-func (cam *sdlCamera) SetBounds(bounds Rectangle) {
-	cam.bounds = bounds
-}
-
-func (cam *sdlCamera) offset() (dx, dy int) {
-	return -cam.position.X, -cam.position.Y
+	check(graphics.renderer.FillRect(&sdlRect))
 }
