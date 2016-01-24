@@ -39,43 +39,40 @@ func NewGame(
 	barney.SetBottomCenterTo(100, 800)
 	barney.Direction = RightDirectionIndex
 
-	objects := []CollisionObject{
-		{Rectangle{0, -10000, 1, 20000}, Solid},    // left wall
-		{Rectangle{2500, -10000, 1, 20000}, Solid}, // right wall
-		{Rectangle{0, 800, 2000, 50}, Solid},       // floor
-
-		{Rectangle{385, 610, 253, 50}, TopSolid},
-		{Rectangle{800, 420, 200, 50}, TopSolid},
-		{Rectangle{380, 230, 200, 50}, TopSolid},
-		{Rectangle{820, 40, 200, 50}, TopSolid},
-		{Rectangle{360, -150, 200, 50}, TopSolid},
-		{Rectangle{840, -340, 1050, 50}, Solid},
-		{Rectangle{340, -530, 200, 50}, TopSolid},
-		{Rectangle{100, -783, 200, 50}, TopSolid},
-		{Rectangle{300, -1036, 1000, 50}, TopSolid},
-		{Rectangle{1700, -1036, 200, 50}, TopSolid},
-		{Rectangle{1840, -840, 50, 1000}, Solid},
-	}
-
-	y := 600
-	imageObjects := []ImageObject{
-		{assets.LoadImage("grass left"), 370, y},
-		{assets.LoadImage("grass center 1"), 422, y},
-		{assets.LoadImage("grass center 2"), 475, y},
-		{assets.LoadImage("grass center 3"), 528, y},
-		{assets.LoadImage("grass right"), 583, y},
-	}
-
 	cam.SetBounds(Rectangle{0, -1399, 2500, 2200})
 
-	return &Game{
+	game := &Game{
 		running:          true,
 		graphics:         graphics,
 		characters:       [2]*Character{hero, barney},
 		primaryCharIndex: cameraFocusCharIndex,
-		objects:          objects,
-		imageObjects:     imageObjects,
 		camera:           cam,
+	}
+	game.loadLevel(assets, &level1)
+	return game
+}
+
+func (g *Game) loadLevel(assets AssetLoader, level *Level) {
+	g.imageObjects = make([]ImageObject, len(level.Images))
+	for i := range level.Images {
+		img := &level.Images[i]
+		g.imageObjects[i].image = assets.LoadImage(img.ID)
+		g.imageObjects[i].X = img.X
+		g.imageObjects[i].Y = img.Y
+	}
+
+	g.objects = make([]CollisionObject, len(level.Objects))
+	for i := range level.Objects {
+		g.objects[i].Solidness = TopSolid
+		if level.Objects[i].Solid {
+			g.objects[i].Solidness = Solid
+		}
+		g.objects[i].Bounds = Rectangle{
+			level.Objects[i].X,
+			level.Objects[i].Y,
+			level.Objects[i].W,
+			level.Objects[i].H,
+		}
 	}
 }
 
@@ -259,7 +256,6 @@ func (g *Game) Render() {
 			g.graphics.FillRect(g.objects[i].Bounds, 255, 0, 0, 255)
 		} else {
 			g.graphics.FillRect(g.objects[i].Bounds, 133, 98, 98, 255)
-			//g.graphics.FillRect(g.objects[i].Bounds, 0, 192, 0, 255)
 		}
 	}
 

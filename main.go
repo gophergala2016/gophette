@@ -62,7 +62,7 @@ func main() {
 		charIndex,
 	)
 
-	frameTime := time.Second / 60
+	frameTime := time.Second / 65
 	lastUpdate := time.Now().Add(-frameTime)
 
 	for game.Running() {
@@ -111,12 +111,10 @@ func main() {
 
 		now := time.Now()
 		dt := now.Sub(lastUpdate)
-		// TODO make sure the animations are not all jittery
-		_ = dt
-		//if dt > frameTime {
-		game.Update()
-		//lastUpdate = now
-		//}
+		if dt > frameTime {
+			game.Update()
+			lastUpdate = now
+		}
 
 		check(renderer.SetDrawColor(255, 255, 255, 255))
 		check(renderer.Clear())

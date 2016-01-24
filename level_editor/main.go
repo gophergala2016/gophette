@@ -11,17 +11,20 @@ import (
 )
 
 var (
-	renderer      *sdl.Renderer
-	backColor     = [3]uint8{255, 0, 0}
-	cameraX       = 0
-	cameraY       = 0
-	draggingImage = false
-	images        []image
+	renderer       *sdl.Renderer
+	backColor      = [3]uint8{255, 0, 0}
+	cameraX        = 0
+	cameraY        = 0
+	draggingImage  = false
+	draggingObject = false
+	images         []image
 )
 
 func main() {
-
 	fmt.Print()
+
+	sdl.SetHint(sdl.HINT_RENDER_VSYNC, "1")
+
 	check(sdl.Init(sdl.INIT_EVERYTHING))
 	defer sdl.Quit()
 
@@ -45,6 +48,7 @@ func main() {
 			"grass center 1",
 			"grass center 2",
 			"grass center 3",
+			"small tree",
 		} {
 			images = append(images, image{id, loadImage(id), 0, i * 50})
 		}
@@ -57,17 +61,29 @@ func main() {
 		}
 	}
 
-	var objects []sdl.Rect
-
 	leftDown := false
 	middleDown := false
+	rightDown := false
 	selectedImage := -1
+	selectedObject := -1
 	var lastX, lastY int
 
 	moveImage := func(dx, dy int) {
 		if selectedImage != -1 {
 			images[selectedImage].x += dx
 			images[selectedImage].y += dy
+		}
+	}
+
+	stretchObject := func(dx, dy int) {
+		if selectedObject != -1 {
+			if sdl.GetKeyboardState()[sdl.SCANCODE_LCTRL] != 0 {
+				dx *= 20
+				dy *= 20
+			}
+			obj := &LevelObjects[selectedObject]
+			obj.W += dx
+			obj.H += dy
 		}
 	}
 
@@ -82,7 +98,10 @@ func main() {
 					leftDown = event.State == sdl.PRESSED
 					if !leftDown {
 						draggingImage = false
+						draggingObject = false
 					} else {
+						selectedObject = -1
+						selectedImage = -1
 						for i := range images {
 							if images[i].contains(
 								int(event.X)-cameraX,
@@ -92,10 +111,33 @@ func main() {
 								selectedImage = i
 							}
 						}
+
+						if selectedImage == -1 {
+							for i := range LevelObjects {
+								if contains(LevelObjects[i],
+									int(event.X)-cameraX,
+									int(event.Y)-cameraY,
+								) {
+									draggingObject = true
+									selectedObject = i
+								}
+							}
+						}
 					}
 				}
 				if event.Button == sdl.BUTTON_MIDDLE {
 					middleDown = event.State == sdl.PRESSED
+				}
+				if event.Button == sdl.BUTTON_RIGHT {
+					rightDown = event.State == sdl.PRESSED
+					LevelObjects = append(LevelObjects, LevelObject{
+						int(event.X) - cameraX,
+						int(event.Y) - cameraY,
+						0,
+						0,
+						true,
+					})
+					selectedObject = -1
 				}
 			case *sdl.MouseMotionEvent:
 				dx, dy := int(event.X)-lastX, int(event.Y)-lastY
@@ -104,11 +146,22 @@ func main() {
 					img.x += dx
 					img.y += dy
 				}
+				if selectedObject != -1 && draggingObject {
+					obj := &LevelObjects[selectedObject]
+					obj.X += dx
+					obj.Y += dy
+				}
 				lastX, lastY = int(event.X), int(event.Y)
 
 				if middleDown {
 					cameraX += dx
 					cameraY += dy
+				}
+
+				if rightDown {
+					last := &LevelObjects[len(LevelObjects)-1]
+					last.W += dx
+					last.H += dy
 				}
 			case *sdl.KeyDownEvent:
 				switch event.Keysym.Sym {
@@ -130,6 +183,19 @@ func main() {
 					moveImage(0, -1)
 				case sdl.K_s:
 					moveImage(0, 1)
+				case sdl.K_j:
+					stretchObject(-1, 0)
+				case sdl.K_l:
+					stretchObject(1, 0)
+				case sdl.K_i:
+					stretchObject(0, -1)
+				case sdl.K_k:
+					stretchObject(0, 1)
+				case sdl.K_SPACE:
+					if selectedObject != -1 {
+						obj := &LevelObjects[selectedObject]
+						obj.Solid = !obj.Solid
+					}
 				case sdl.K_c:
 					if selectedImage != -1 {
 						copy := images[selectedImage]
@@ -141,9 +207,15 @@ func main() {
 					if selectedImage != -1 {
 						images = append(images[:selectedImage], images[selectedImage+1:]...)
 						selectedImage = -1
+					} else if selectedObject != -1 {
+						LevelObjects = append(
+							LevelObjects[:selectedObject],
+							LevelObjects[selectedObject+1:]...,
+						)
+						selectedObject = -1
 					}
 				case sdl.K_F3:
-					saveImages()
+					saveLevel()
 				}
 			}
 		}
@@ -155,16 +227,23 @@ func main() {
 			img.render(i == selectedImage)
 		}
 
-		renderer.SetDrawColor(0, 0, 0, 64)
-		for _, obj := range objects {
-			obj.X += int32(cameraX)
-			obj.Y += int32(cameraY)
-			renderer.FillRect(&obj)
+		for i, obj := range LevelObjects {
+			var g uint8 = 0
+			var a uint8 = 100
+			if i == selectedObject {
+				g = 255
+			}
+			renderer.SetDrawColor(0, g, 0, a)
+			if obj.Solid {
+				renderer.SetDrawColor(0, g, 255, a)
+			}
+			obj.X += cameraX
+			obj.Y += cameraY
+			r := sdl.Rect{int32(obj.X), int32(obj.Y), int32(obj.W), int32(obj.H)}
+			renderer.FillRect(&r)
 		}
 
 		renderer.Present()
-
-		sdl.Delay(10)
 	}
 }
 
@@ -220,8 +299,7 @@ type LevelImage struct {
 }
 
 var LevelImages = []LevelImage{
-` + imagesToString() + `
-}
+` + imagesToString() + `}
 `)
 
 	ioutil.WriteFile("./images.go", buffer.Bytes(), 0777)
@@ -236,4 +314,54 @@ func imagesToString() string {
 	}
 
 	return string(buffer.Bytes())
+}
+
+func saveObjects() {
+	buffer := bytes.NewBuffer(nil)
+	buffer.WriteString(`package main
+
+type LevelObject struct {
+	X, Y, W, H int
+	Solid      bool
+}
+
+var LevelObjects = []LevelObject{
+` + objectsToString() + `}
+`)
+
+	ioutil.WriteFile("./objects.go", buffer.Bytes(), 0777)
+}
+
+func objectsToString() string {
+	buffer := bytes.NewBuffer(nil)
+
+	for _, obj := range LevelObjects {
+		buffer.WriteString(fmt.Sprintf(`	{%v, %v, %v, %v, %v},
+`,
+			obj.X, obj.Y, obj.W, obj.H, obj.Solid,
+		))
+	}
+
+	return string(buffer.Bytes())
+}
+
+func contains(obj LevelObject, x, y int) bool {
+	return x >= obj.X && y >= obj.Y && x < obj.X+obj.W && y < obj.Y+obj.H
+}
+
+func saveLevel() {
+	buffer := bytes.NewBuffer(nil)
+	buffer.WriteString(`package main
+
+var level1 = Level{
+	[]LevelObject{` + objectsToString() + `
+	},
+	[]LevelImage{` + imagesToString() + `
+	},
+}
+`)
+	ioutil.WriteFile("../level1.go", buffer.Bytes(), 0777)
+
+	saveImages()
+	saveObjects()
 }
