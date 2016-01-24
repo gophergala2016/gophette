@@ -199,5 +199,5 @@ func (graphics *sdlGraphics) FillRect(rect Rectangle, r, g, b, a uint8) {
 	check(graphics.renderer.SetDrawColor(r, g, b, a))
 	rect = rect.MoveBy(graphics.camera.offset())
 	sdlRect := sdl.Rect{int32(rect.X), int32(rect.Y), int32(rect.W), int32(rect.H)}
-	check(graphics.renderer.FillRect(&sdlRect))
+	graphics.renderer.FillRect(&sdlRect)
 }
