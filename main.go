@@ -49,9 +49,10 @@ func main() {
 
 	// NOTE either this
 	const charIndex = 0
-	// NOTE or these
+	//NOTE or these
 	//const charIndex = 1
 	//recordedInputs = recordedInputs[:0]
+	//recordingInput = true
 
 	game := NewGame(
 		assetLoader,

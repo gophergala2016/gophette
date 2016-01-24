@@ -6,10 +6,10 @@ import (
 	"io/ioutil"
 )
 
-const (
+var (
 	recordingInput         = false
 	replayingInput         = false
-	recordedCharacterIndex = 0
+	recordedCharacterIndex = 1
 )
 
 type inputRecord struct {

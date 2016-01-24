@@ -39,21 +39,21 @@ func NewGame(
 	barney.Direction = RightDirectionIndex
 
 	objects := []CollisionObject{
-		{Rectangle{0, -10000, 1, 20000}},    // left wall
-		{Rectangle{1999, -10000, 1, 20000}}, // right wall
-		{Rectangle{0, 800, 2000, 50}},       // floor
+		{Rectangle{0, -10000, 1, 20000}, Solid},    // left wall
+		{Rectangle{1999, -10000, 1, 20000}, Solid}, // right wall
+		{Rectangle{0, 800, 2000, 50}, Solid},       // floor
 
-		{Rectangle{400, 610, 200, 50}},
-		{Rectangle{800, 420, 200, 50}},
-		{Rectangle{380, 230, 200, 50}},
-		{Rectangle{820, 40, 200, 50}},
-		{Rectangle{360, -150, 200, 50}},
-		{Rectangle{840, -340, 1050, 50}},
-		{Rectangle{340, -530, 200, 50}},
-		{Rectangle{100, -783, 200, 50}}, // max jump height is 253
-		{Rectangle{300, -1036, 1000, 50}},
-		{Rectangle{1700, -1036, 200, 50}},
-		{Rectangle{1840, -840, 50, 1000}},
+		{Rectangle{400, 610, 200, 50}, TopSolid},
+		{Rectangle{800, 420, 200, 50}, TopSolid},
+		{Rectangle{380, 230, 200, 50}, TopSolid},
+		{Rectangle{820, 40, 200, 50}, TopSolid},
+		{Rectangle{360, -150, 200, 50}, TopSolid},
+		{Rectangle{840, -340, 1050, 50}, Solid},
+		{Rectangle{340, -530, 200, 50}, TopSolid},
+		{Rectangle{100, -783, 200, 50}, TopSolid},
+		{Rectangle{300, -1036, 1000, 50}, TopSolid},
+		{Rectangle{1700, -1036, 200, 50}, TopSolid},
+		{Rectangle{1840, -840, 50, 1000}, Solid},
 	}
 
 	cam.SetBounds(Rectangle{0, -1399, 2000, 2200})
@@ -173,7 +173,8 @@ func (g *Game) MoveInX(bounds Rectangle, dx int) (newBounds Rectangle, collided 
 		moveSpace.X += dx
 		moveSpace.W -= dx // make it wider, dx is negative
 		for i := range g.objects {
-			if g.objects[i].Bounds.Overlaps(moveSpace) {
+			if g.objects[i].Solidness == Solid &&
+				g.objects[i].Bounds.Overlaps(moveSpace) {
 				collided = true
 				overlap := g.objects[i].Bounds.X + g.objects[i].Bounds.W - moveSpace.X
 				moveSpace.X += overlap
@@ -186,7 +187,8 @@ func (g *Game) MoveInX(bounds Rectangle, dx int) (newBounds Rectangle, collided 
 		moveSpace := bounds
 		moveSpace.W += dx
 		for i := range g.objects {
-			if g.objects[i].Bounds.Overlaps(moveSpace) {
+			if g.objects[i].Solidness == Solid &&
+				g.objects[i].Bounds.Overlaps(moveSpace) {
 				collided = true
 				overlap := moveSpace.X + moveSpace.W - g.objects[i].Bounds.X
 				moveSpace.W -= overlap
@@ -198,14 +200,14 @@ func (g *Game) MoveInX(bounds Rectangle, dx int) (newBounds Rectangle, collided 
 }
 
 func (g *Game) MoveInY(bounds Rectangle, dy int) (newBounds Rectangle, collided bool) {
-	// this works analogous to MoveInX
 	newBounds = bounds.MoveBy(0, dy)
 	if dy < 0 {
 		moveSpace := bounds
 		moveSpace.Y += dy
-		moveSpace.H -= dy // make it higher, dy is negative
+		moveSpace.H -= dy // make it wider, dy is negative
 		for i := range g.objects {
-			if g.objects[i].Bounds.Overlaps(moveSpace) {
+			if g.objects[i].Solidness == Solid &&
+				g.objects[i].Bounds.Overlaps(moveSpace) {
 				collided = true
 				overlap := g.objects[i].Bounds.Y + g.objects[i].Bounds.H - moveSpace.Y
 				moveSpace.Y += overlap
@@ -214,17 +216,24 @@ func (g *Game) MoveInY(bounds Rectangle, dy int) (newBounds Rectangle, collided 
 		}
 		newBounds = bounds.MoveTo(moveSpace.X, moveSpace.Y)
 	}
+	// when jumping up you are allowed to go through TopSolid objects from the
+	// bottom when you land on an object (going down) you come to a halt and
+	// stand on it; this means the only going down needs to be considered for
+	// collision detection
 	if dy > 0 {
 		moveSpace := bounds
-		moveSpace.H += dy
+		moveSpace.Y += bounds.H
+		moveSpace.H = dy
 		for i := range g.objects {
-			if g.objects[i].Bounds.Overlaps(moveSpace) {
+			objBounds := g.objects[i].Bounds
+			objBounds.H = 1
+			if objBounds.Overlaps(moveSpace) {
 				collided = true
 				overlap := moveSpace.Y + moveSpace.H - g.objects[i].Bounds.Y
 				moveSpace.H -= overlap
 			}
 		}
-		newBounds = bounds.MoveTo(moveSpace.X, moveSpace.Y+moveSpace.H-bounds.H)
+		newBounds = bounds.MoveBy(0, moveSpace.H)
 	}
 	return
 }
@@ -235,7 +244,11 @@ func (g *Game) Running() bool {
 
 func (g *Game) Render() {
 	for i := range g.objects {
-		g.graphics.FillRect(g.objects[i].Bounds, 255, 0, 0, 255)
+		if g.objects[i].Solidness == Solid {
+			g.graphics.FillRect(g.objects[i].Bounds, 255, 0, 0, 255)
+		} else {
+			g.graphics.FillRect(g.objects[i].Bounds, 0, 192, 0, 255)
+		}
 	}
 
 	g.characters[1].Render()
