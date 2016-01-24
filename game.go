@@ -41,7 +41,7 @@ func NewGame(
 
 	objects := []CollisionObject{
 		{Rectangle{0, -10000, 1, 20000}, Solid},    // left wall
-		{Rectangle{1999, -10000, 1, 20000}, Solid}, // right wall
+		{Rectangle{2500, -10000, 1, 20000}, Solid}, // right wall
 		{Rectangle{0, 800, 2000, 50}, Solid},       // floor
 
 		{Rectangle{385, 610, 253, 50}, TopSolid},
@@ -66,7 +66,7 @@ func NewGame(
 		{assets.LoadImage("grass right"), 583, y},
 	}
 
-	cam.SetBounds(Rectangle{0, -1399, 2000, 2200})
+	cam.SetBounds(Rectangle{0, -1399, 2500, 2200})
 
 	return &Game{
 		running:          true,
