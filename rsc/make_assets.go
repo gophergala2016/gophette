@@ -155,6 +155,7 @@ func main() {
 		"lose",
 		"fall",
 		"barney wins",
+		"whistle",
 	} {
 		data, err := ioutil.ReadFile(sound + ".wav")
 		check(err)

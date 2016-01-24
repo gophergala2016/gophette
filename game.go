@@ -1,11 +1,12 @@
 package main
 
 const (
-	PrePlayFrameDelay = 100
-	PlayerDyingDelay  = 100
-	LosingSoundDelay  = 90
-	BarneyWinDelay    = 100
-	PlayerWinDelay    = 80
+	PrePlayFrameDelay    = 100
+	PlayerDyingDelay     = 100
+	LosingSoundDelay     = 90
+	BarneyWinDelay       = 100
+	PlayerWinDelay       = 80
+	WhistleSoundDuration = 30
 )
 
 type Game struct {
@@ -34,6 +35,7 @@ type Game struct {
 	losingSound    Sound
 	fallingSound   Sound
 	barneyWinSound Sound
+	whistleSound   Sound
 }
 
 type Camera interface {
@@ -71,7 +73,7 @@ func NewGame(
 	hero.Direction = RightDirectionIndex
 
 	barney := NewBarney(assets)
-	barney.SetBottomCenterTo(8800, -800)
+	barney.SetBottomCenterTo(8500, -800)
 	//barney.SetBottomCenterTo(300, 537) // TODO
 	barney.Direction = RightDirectionIndex
 
@@ -91,6 +93,7 @@ func NewGame(
 		losingSound:      assets.LoadSound("lose"),
 		fallingSound:     assets.LoadSound("fall"),
 		barneyWinSound:   assets.LoadSound("barney wins"),
+		whistleSound:     assets.LoadSound("whistle"),
 	}
 	game.loadLevel(assets, &level1)
 	game.state = PrePlaying
@@ -181,6 +184,9 @@ func (g *Game) Update() {
 	} else if g.state == PrePlaying {
 		g.camera.CenterAround(g.characters[g.primaryCharIndex].Position.Center())
 		g.prePlayCountDown--
+		if g.prePlayCountDown == WhistleSoundDuration {
+			g.whistleSound.PlayOnce()
+		}
 		if g.prePlayCountDown <= 0 {
 			g.state = Playing
 		}
@@ -191,6 +197,7 @@ func (g *Game) Update() {
 		}
 	} else if g.state == PlayerWinning {
 		g.characters[0].Reset(LeftDirectionIndex)
+		g.characters[1].Reset(RightDirectionIndex)
 		g.playerWinCountDown--
 		if g.playerWinCountDown < 0 {
 			// TODO go to end cut-scene
