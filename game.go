@@ -3,6 +3,9 @@ package main
 const (
 	PrePlayFrameDelay = 100
 	PlayerDyingDelay  = 100
+	LosingSoundDelay  = 90
+	BarneyWinDelay    = 100
+	PlayerWinDelay    = 80
 )
 
 type Game struct {
@@ -14,6 +17,10 @@ type Game struct {
 	playerDyingCountDown int
 	dieBounds            Rectangle
 	aiInputs             []inputRecord
+	goalBounds           Rectangle
+	losingSoundCountDown int
+	barneyWinCountDown   int
+	playerWinCountDown   int
 
 	running          bool
 	characters       [2]*Character
@@ -22,6 +29,11 @@ type Game struct {
 
 	objects      []CollisionObject
 	imageObjects []ImageObject
+
+	winningSound   Sound
+	losingSound    Sound
+	fallingSound   Sound
+	barneyWinSound Sound
 }
 
 type Camera interface {
@@ -42,6 +54,9 @@ const (
 	Playing GameState = iota + 1
 	PrePlaying
 	PlayerDying
+	PlayerWinning
+	PlayerRealizingLoss
+	CameraShowsBarneyWinning
 )
 
 func NewGame(
@@ -51,14 +66,16 @@ func NewGame(
 	cameraFocusCharIndex int,
 ) *Game {
 	hero := NewHero(assets)
-	hero.SetBottomCenterTo(500, 537)
+	//hero.SetBottomCenterTo(500, 537)
+	hero.SetBottomCenterTo(8800, -800) // TODO
 	hero.Direction = RightDirectionIndex
 
 	barney := NewBarney(assets)
-	barney.SetBottomCenterTo(300, 537)
+	barney.SetBottomCenterTo(8800, -800)
+	//barney.SetBottomCenterTo(300, 537) // TODO
 	barney.Direction = RightDirectionIndex
 
-	cameraBounds := Rectangle{200, -1399, 9200, 2100}
+	cameraBounds := Rectangle{200, -1399, 9150, 2100}
 	cam.SetBounds(cameraBounds)
 
 	game := &Game{
@@ -69,6 +86,11 @@ func NewGame(
 		camera:           cam,
 		dieBounds:        cameraBounds.AddMargin(200),
 		aiInputs:         recordedInputs,
+		goalBounds:       Rectangle{9200, -1000, 1000, 350},
+		winningSound:     assets.LoadSound("win"),
+		losingSound:      assets.LoadSound("lose"),
+		fallingSound:     assets.LoadSound("fall"),
+		barneyWinSound:   assets.LoadSound("barney wins"),
 	}
 	game.loadLevel(assets, &level1)
 	game.state = PrePlaying
@@ -140,8 +162,19 @@ func (g *Game) Update() {
 		g.updateCharacter(1)
 
 		if !g.dieBounds.Overlaps(g.characters[0].Position) {
+			g.fallingSound.PlayOnce()
 			g.state = PlayerDying
 			g.playerDyingCountDown = PlayerDyingDelay
+		}
+
+		if g.goalBounds.Contains(g.characters[0].Position) {
+			g.winningSound.PlayOnce()
+			g.playerWinCountDown = PlayerWinDelay
+			g.state = PlayerWinning
+		} else if g.goalBounds.Contains(g.characters[1].Position) {
+			g.losingSound.PlayOnce()
+			g.state = PlayerRealizingLoss
+			g.losingSoundCountDown = LosingSoundDelay
 		}
 
 		g.camera.CenterAround(g.characters[g.primaryCharIndex].Position.Center())
@@ -156,6 +189,26 @@ func (g *Game) Update() {
 		if g.playerDyingCountDown <= 0 {
 			g.resetLevel()
 		}
+	} else if g.state == PlayerWinning {
+		g.characters[0].Reset(LeftDirectionIndex)
+		g.playerWinCountDown--
+		if g.playerWinCountDown < 0 {
+			// TODO go to end cut-scene
+		}
+	} else if g.state == PlayerRealizingLoss {
+		g.losingSoundCountDown--
+		if g.losingSoundCountDown <= 0 {
+			g.state = CameraShowsBarneyWinning
+			g.barneyWinCountDown = BarneyWinDelay
+			g.barneyWinSound.PlayOnce()
+			g.characters[1].Reset(LeftDirectionIndex)
+		}
+	} else if g.state == CameraShowsBarneyWinning {
+		g.camera.CenterAround(g.characters[1].Position.Center())
+		g.barneyWinCountDown--
+		if g.barneyWinCountDown <= 0 {
+			g.resetLevel()
+		}
 	}
 }
 
@@ -166,7 +219,8 @@ func (g *Game) resetLevel() {
 	g.characters[1].SetBottomCenterTo(300, 537)
 	g.characters[1].Reset(RightDirectionIndex)
 
-	g.aiInputs = recordedInputs
+	g.aiInputs = make([]inputRecord, len(recordedInputs))
+	copy(g.aiInputs, recordedInputs)
 	frame = 0
 
 	g.state = PrePlaying
@@ -307,17 +361,19 @@ func (g *Game) Running() bool {
 }
 
 func (g *Game) Render() {
-	for i := range g.objects {
-		if g.objects[i].Solidness == Solid {
-			g.graphics.FillRect(g.objects[i].Bounds, 30, 98, 98, 255)
-		} else {
-			g.graphics.FillRect(g.objects[i].Bounds, 133, 98, 98, 255)
-		}
-	}
+	//for i := range g.objects {
+	//	if g.objects[i].Solidness == Solid {
+	//		g.graphics.FillRect(g.objects[i].Bounds, 30, 98, 98, 255)
+	//	} else {
+	//		g.graphics.FillRect(g.objects[i].Bounds, 133, 98, 98, 255)
+	//	}
+	//}
 
 	for i := range g.imageObjects {
 		g.imageObjects[i].Render()
 	}
+
+	//g.graphics.FillRect(g.goalBounds, 0, 0, 0, 0)
 
 	g.characters[1].Render()
 	g.characters[0].Render()

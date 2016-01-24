@@ -25,6 +25,10 @@ func (r Rectangle) AddMargin(margin int) Rectangle {
 	return Rectangle{r.X - margin, r.Y - margin, r.W + 2*margin, r.H + 2*margin}
 }
 
+func (r Rectangle) Contains(o Rectangle) bool {
+	return o.X >= r.X && o.Y >= r.Y && o.X+o.W <= r.X+r.W && o.Y+o.H <= r.Y+r.H
+}
+
 type Point struct {
 	X, Y int
 }

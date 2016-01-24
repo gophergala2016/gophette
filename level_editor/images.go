@@ -6,6 +6,9 @@ type LevelImage struct {
 }
 
 var LevelImages = []LevelImage{
+	{"small tree", 9032, -794},
+	{"huge tree", 8749, -1131},
+	{"cave back", 9041, -1065},
 	{"small tree", 1420, 424},
 	{"big tree", 1173, 309},
 	{"square rock", 1226, 395},
@@ -22,8 +25,6 @@ var LevelImages = []LevelImage{
 	{"ground right", 7761, 648},
 	{"ground long 2", 7358, 646},
 	{"ground long 1", 7209, 646},
-	{"small tree", 9032, -794},
-	{"huge tree", 8749, -1131},
 	{"big tree", 8369, -905},
 	{"small tree", 7800, -789},
 	{"huge tree", 7773, -1131},
@@ -326,4 +327,5 @@ var LevelImages = []LevelImage{
 	{"grass left", 7703, -360},
 	{"grass center 3", 7299, -542},
 	{"grass center 1", 7264, -542},
+	{"cave front", 9041, -1066},
 }

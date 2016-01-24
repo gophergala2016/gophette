@@ -9,6 +9,11 @@ type Image interface {
 	Size() (width, height int)
 }
 
+type Sound interface {
+	PlayOnce()
+}
+
 type AssetLoader interface {
 	LoadImage(id string) Image
+	LoadSound(id string) Sound
 }

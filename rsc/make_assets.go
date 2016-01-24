@@ -138,6 +138,29 @@ func main() {
 	hugeTree := scaleImage(tree.GetLayerByName("huge"))
 	resources["huge tree"] = imageToBytes(hugeTree)
 
+	cave, err := xcf.LoadFromFile("./cave.xcf")
+	check(err)
+	resources["cave back"] = imageToBytes(scaleImage(cave.GetLayerByName("cave back")))
+	resources["cave front"] = imageToBytes(scaleImage(cave.GetLayerByName("cave front")))
+
+	// the music file is too big, breaks IDE
+	/*
+		music, err := ioutil.ReadFile("./background_music.ogg")
+		check(err)
+		resources["music"] = music
+	*/
+
+	for _, sound := range []string{
+		"win",
+		"lose",
+		"fall",
+		"barney wins",
+	} {
+		data, err := ioutil.ReadFile(sound + ".wav")
+		check(err)
+		resources[sound] = data
+	}
+
 	content := toGoFile(resources, string(constants.Bytes()))
 	ioutil.WriteFile("../resource/resources.go", content, 0777)
 }

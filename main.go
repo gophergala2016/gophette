@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/gophergala2016/gophette/resource"
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/sdl_image"
@@ -67,6 +68,14 @@ func main() {
 
 	frameTime := time.Second / 65
 	lastUpdate := time.Now().Add(-frameTime)
+
+	music, err := mix.LoadMUS("./rsc/background_music.ogg")
+	if err != nil {
+		fmt.Println("error loading music:", err)
+	} else {
+		defer music.Free()
+		music.FadeIn(-1, 500)
+	}
 
 	for game.Running() {
 		for e := sdl.PollEvent(); e != nil; e = sdl.PollEvent() {
@@ -152,10 +161,19 @@ func (img *textureImage) Size() (int, int) {
 	return int(w), int(h)
 }
 
+type wavSound struct {
+	chunk *mix.Chunk
+}
+
+func (s *wavSound) PlayOnce() {
+	s.chunk.Play(-1, 0)
+}
+
 type sdlAssetLoader struct {
 	camera   *windowCamera
 	renderer *sdl.Renderer
 	images   map[string]*textureImage
+	sounds   map[string]*wavSound
 }
 
 func newSDLAssetLoader(cam *windowCamera, renderer *sdl.Renderer) *sdlAssetLoader {
@@ -163,6 +181,7 @@ func newSDLAssetLoader(cam *windowCamera, renderer *sdl.Renderer) *sdlAssetLoade
 		camera:   cam,
 		renderer: renderer,
 		images:   make(map[string]*textureImage),
+		sounds:   make(map[string]*wavSound),
 	}
 }
 
@@ -172,7 +191,7 @@ func (l *sdlAssetLoader) LoadImage(id string) Image {
 	}
 	data := resource.Resources[id]
 	if data == nil {
-		panic("unknown resource: " + id)
+		panic("unknown image resource: " + id)
 	}
 
 	rwOps := sdl.RWFromMem(unsafe.Pointer(&data[0]), len(data))
@@ -187,9 +206,30 @@ func (l *sdlAssetLoader) LoadImage(id string) Image {
 	return image
 }
 
+func (l *sdlAssetLoader) LoadSound(id string) Sound {
+	if sound, ok := l.sounds[id]; ok {
+		return sound
+	}
+	data := resource.Resources[id]
+	if data == nil {
+		panic("unknown sound resource: " + id)
+	}
+
+	rwOps := sdl.RWFromMem(unsafe.Pointer(&data[0]), len(data))
+	chunk, err := mix.LoadWAV_RW(rwOps, false)
+	check(err)
+	sound := &wavSound{chunk}
+	l.sounds[id] = sound
+
+	return sound
+}
+
 func (l *sdlAssetLoader) close() {
 	for _, image := range l.images {
 		image.texture.Destroy()
+	}
+	for _, sound := range l.sounds {
+		sound.chunk.Free()
 	}
 }
 
