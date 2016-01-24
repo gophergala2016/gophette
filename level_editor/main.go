@@ -39,6 +39,7 @@ func main() {
 	window.SetTitle("Gophette's Adventures - Level Editor")
 	window.SetPosition(50, 50)
 	window.SetSize(1800, 900)
+	window.SetFullscreen(sdl.WINDOW_FULLSCREEN_DESKTOP)
 	renderer.SetDrawBlendMode(sdl.BLENDMODE_BLEND)
 
 	if len(LevelImages) == 0 {
@@ -191,6 +192,25 @@ func main() {
 					stretchObject(0, -1)
 				case sdl.K_k:
 					stretchObject(0, 1)
+				case sdl.K_MINUS:
+					if selectedImage != -1 && selectedImage != 0 {
+						images = append(append(
+							[]image{images[selectedImage]},
+							images[0:selectedImage]...),
+							images[selectedImage+1:]...,
+						)
+						selectedImage = 0
+					}
+				case sdl.K_PLUS:
+					last := len(images) - 1
+					if selectedImage != -1 && selectedImage != last {
+						images = append(append(
+							images[0:selectedImage],
+							images[selectedImage+1:]...),
+							images[selectedImage],
+						)
+						selectedImage = last
+					}
 				case sdl.K_SPACE:
 					if selectedObject != -1 {
 						obj := &LevelObjects[selectedObject]
@@ -350,6 +370,13 @@ func contains(obj LevelObject, x, y int) bool {
 }
 
 func saveLevel() {
+	for i := 0; i < len(LevelObjects); i++ {
+		if LevelObjects[i].W == 0 || LevelObjects[i].H == 0 {
+			LevelObjects = append(LevelObjects[:i], LevelObjects[i+1:]...)
+			i--
+		}
+	}
+
 	buffer := bytes.NewBuffer(nil)
 	buffer.WriteString(`package main
 

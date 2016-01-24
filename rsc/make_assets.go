@@ -98,6 +98,11 @@ func main() {
 	bigTree := scaleImage(tree.GetLayerByName("big"))
 	resources["big tree"] = imageToBytes(bigTree)
 
+	tree, err = xcf.LoadFromFile("./tree_huge.xcf")
+	check(err)
+	hugeTree := scaleImage(tree.GetLayerByName("huge"))
+	resources["huge tree"] = imageToBytes(hugeTree)
+
 	content := toGoFile(resources, string(constants.Bytes()))
 	ioutil.WriteFile("../resource/resources.go", content, 0777)
 }

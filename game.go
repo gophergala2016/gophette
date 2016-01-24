@@ -252,11 +252,11 @@ func (g *Game) Running() bool {
 
 func (g *Game) Render() {
 	for i := range g.objects {
-		//if g.objects[i].Solidness == Solid {
-		//g.graphics.FillRect(g.objects[i].Bounds, 255, 0, 0, 255)
-		//} else {
-		g.graphics.FillRect(g.objects[i].Bounds, 133, 98, 98, 255)
-		//}
+		if g.objects[i].Solidness == Solid {
+			g.graphics.FillRect(g.objects[i].Bounds, 30, 98, 98, 255)
+		} else {
+			g.graphics.FillRect(g.objects[i].Bounds, 133, 98, 98, 255)
+		}
 	}
 
 	for i := range g.imageObjects {

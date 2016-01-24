@@ -1,2 +1,5 @@
 *.exe
 unused
+rsc/rsc
+gophette
+level_editor/level_editor
