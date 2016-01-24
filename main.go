@@ -116,7 +116,7 @@ func main() {
 			lastUpdate = now
 		}
 
-		check(renderer.SetDrawColor(255, 255, 255, 255))
+		check(renderer.SetDrawColor(0, 95, 83, 255))
 		check(renderer.Clear())
 		game.Render()
 		renderer.Present()

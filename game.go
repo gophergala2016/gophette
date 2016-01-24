@@ -39,7 +39,7 @@ func NewGame(
 	barney.SetBottomCenterTo(300, 500)
 	barney.Direction = RightDirectionIndex
 
-	cam.SetBounds(Rectangle{200, -1399, 2500, 2200})
+	cam.SetBounds(Rectangle{200, -1399, 2500, 2000})
 
 	game := &Game{
 		running:          true,
@@ -251,17 +251,17 @@ func (g *Game) Running() bool {
 }
 
 func (g *Game) Render() {
-	//for i := range g.objects {
-	//	if g.objects[i].Solidness == Solid {
-	//		g.graphics.FillRect(g.objects[i].Bounds, 30, 98, 98, 255)
-	//	} else {
-	//		g.graphics.FillRect(g.objects[i].Bounds, 133, 98, 98, 255)
-	//	}
-	//}
-
-	for i := range g.imageObjects {
-		g.imageObjects[i].Render()
+	for i := range g.objects {
+		if g.objects[i].Solidness == Solid {
+			g.graphics.FillRect(g.objects[i].Bounds, 30, 98, 98, 255)
+		} else {
+			g.graphics.FillRect(g.objects[i].Bounds, 133, 98, 98, 255)
+		}
 	}
+
+	//for i := range g.imageObjects {
+	//	g.imageObjects[i].Render()
+	//}
 
 	g.characters[1].Render()
 	g.characters[0].Render()

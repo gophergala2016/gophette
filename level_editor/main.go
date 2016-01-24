@@ -12,7 +12,7 @@ import (
 
 var (
 	renderer       *sdl.Renderer
-	backColor      = [3]uint8{255, 0, 0}
+	backColor      = [3]uint8{0, 95, 83}
 	cameraX        = 0
 	cameraY        = 0
 	draggingImage  = false

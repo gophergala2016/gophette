@@ -195,10 +195,4 @@ func (c *Character) Update(collider Collider) {
 	if collided {
 		c.SpeedX = 0
 	}
-
-	if c.Position.Y+c.Position.H > 800 {
-		c.Position.Y = 800 - c.Position.H
-		c.SpeedY = 0
-		c.InAir = false
-	}
 }
