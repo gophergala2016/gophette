@@ -76,8 +76,20 @@ func main() {
 		resources["barney_right_"+layer] = imageToBytes(smallRight)
 	}
 
+	grass, err := xcf.LoadFromFile("./grass.xcf")
+	check(err)
+	for _, layer := range []string{
+		"grass left",
+		"grass right",
+		"grass center 1",
+		"grass center 2",
+		"grass center 3",
+	} {
+		resources[layer] = imageToBytes(grass.GetLayerByName(layer))
+	}
+
 	content := toGoFile(resources, string(constants.Bytes()))
-	ioutil.WriteFile("../resources.go", content, 0777)
+	ioutil.WriteFile("../resource/resources.go", content, 0777)
 }
 
 func imageToBytes(img image.Image) []byte {
@@ -121,9 +133,11 @@ func scaleImage(img image.Image) image.Image {
 
 func toGoFile(resources ResourceMap, constants string) []byte {
 	buffer := bytes.NewBuffer(nil)
-	buffer.WriteString(`package main
+	buffer.WriteString(`package resource
 
 // NOTE this file is generated, do not edit it
+
+type Rectangle struct{ X, Y, W, H int }
 
 ` + constants + `
 var Resources = map[string][]byte{`)

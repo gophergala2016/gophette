@@ -1,5 +1,7 @@
 package main
 
+import "github.com/gophergala2016/gophette/resource"
+
 type CharacterParams struct {
 	AccelerationX     int
 	DecelerationX     int
@@ -52,10 +54,14 @@ type Character struct {
 	nextRunFrame  int
 }
 
+func toRect(r resource.Rectangle) Rectangle {
+	return Rectangle{r.X, r.Y, r.W, r.H}
+}
+
 func NewHero(assets AssetLoader) *Character {
 	return &Character{
-		Position:      HeroCollisionRect,
-		collisionRect: HeroCollisionRect,
+		Position:      toRect(resource.HeroCollisionRect),
+		collisionRect: toRect(resource.HeroCollisionRect),
 		Params:        HeroParams,
 		runFrames: [DirectionCount][]Image{
 			[]Image{
@@ -84,8 +90,8 @@ func NewHero(assets AssetLoader) *Character {
 
 func NewBarney(assets AssetLoader) *Character {
 	return &Character{
-		Position:      BarneyCollisionRect,
-		collisionRect: BarneyCollisionRect,
+		Position:      toRect(resource.BarneyCollisionRect),
+		collisionRect: toRect(resource.BarneyCollisionRect),
 		Params:        BarneyParams,
 		runFrames: [DirectionCount][]Image{
 			[]Image{

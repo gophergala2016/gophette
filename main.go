@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/gophergala2016/gophette/resource"
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/sdl_image"
 	"github.com/veandco/go-sdl2/sdl_mixer"
@@ -168,7 +169,7 @@ func (l *sdlAssetLoader) LoadImage(id string) Image {
 	if img, ok := l.images[id]; ok {
 		return img
 	}
-	data := Resources[id]
+	data := resource.Resources[id]
 	if data == nil {
 		panic("unknown resource: " + id)
 	}
