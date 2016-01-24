@@ -48,12 +48,15 @@ func main() {
 	// this to 1 and delete the recorded inputs so they are not applied
 	// additionally to the user controls
 
-	// NOTE either this
-	const charIndex = 0
-	//NOTE or these
-	//const charIndex = 1
-	//recordedInputs = recordedInputs[:0]
-	//recordingInput = true
+	var charIndex int
+	const recordingAI = false // NOTE switch for development mode
+	if !recordingAI {
+		charIndex = 0
+	} else {
+		charIndex = 1
+		recordedInputs = recordedInputs[:0]
+		recordingInput = true
+	}
 
 	game := NewGame(
 		assetLoader,

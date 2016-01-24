@@ -27,7 +27,7 @@ var HeroParams = CharacterParams{
 var BarneyParams = CharacterParams{
 	AccelerationX:     2,
 	DecelerationX:     1,
-	MaxSpeedX:         12,
+	MaxSpeedX:         11,
 	MaxSpeedY:         32,
 	InitialJumpSpeedY: -25,
 	HighGravity:       2,
@@ -120,6 +120,13 @@ func NewBarney(assets AssetLoader) *Character {
 			assets.LoadImage("barney_right_jump"),
 		},
 	}
+}
+
+func (c *Character) Reset(dir int) {
+	c.Direction = dir
+	c.SpeedX = 0
+	c.SpeedY = 0
+	c.InAir = false
 }
 
 func (c *Character) SetBottomCenterTo(x, y int) {

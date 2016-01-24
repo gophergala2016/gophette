@@ -1,8 +1,19 @@
 package main
 
+const (
+	PrePlayFrameDelay = 100
+	PlayerDyingDelay  = 100
+)
+
 type Game struct {
 	graphics Graphics
 	camera   Camera
+
+	state                GameState
+	prePlayCountDown     int
+	playerDyingCountDown int
+	dieBounds            Rectangle
+	aiInputs             []inputRecord
 
 	running          bool
 	characters       [2]*Character
@@ -25,6 +36,14 @@ type inputState struct {
 	mustJumpThisFrame bool
 }
 
+type GameState int
+
+const (
+	Playing GameState = iota + 1
+	PrePlaying
+	PlayerDying
+)
+
 func NewGame(
 	assets AssetLoader,
 	graphics Graphics,
@@ -32,14 +51,15 @@ func NewGame(
 	cameraFocusCharIndex int,
 ) *Game {
 	hero := NewHero(assets)
-	hero.SetBottomCenterTo(400, 500)
+	hero.SetBottomCenterTo(500, 537)
 	hero.Direction = RightDirectionIndex
 
 	barney := NewBarney(assets)
-	barney.SetBottomCenterTo(300, 500)
+	barney.SetBottomCenterTo(300, 537)
 	barney.Direction = RightDirectionIndex
 
-	cam.SetBounds(Rectangle{200, -1399, 2500, 2000})
+	cameraBounds := Rectangle{200, -1399, 25000, 2100}
+	cam.SetBounds(cameraBounds)
 
 	game := &Game{
 		running:          true,
@@ -47,8 +67,12 @@ func NewGame(
 		characters:       [2]*Character{hero, barney},
 		primaryCharIndex: cameraFocusCharIndex,
 		camera:           cam,
+		dieBounds:        cameraBounds.AddMargin(200),
+		aiInputs:         recordedInputs,
 	}
 	game.loadLevel(assets, &level1)
+	game.state = PrePlaying
+	game.prePlayCountDown = PrePlayFrameDelay
 	return game
 }
 
@@ -101,20 +125,52 @@ func (g *Game) HandleInput(event InputEvent) {
 }
 
 func (g *Game) Update() {
-	for len(recordedInputs) > 0 && recordedInputs[0].frame == frame {
-		if recordedInputs[0].event.Action != QuitGame {
-			recordedInputs[0].event.CharacterIndex = 1
-			g.HandleInput(recordedInputs[0].event)
+	if g.state == Playing {
+		for len(g.aiInputs) > 0 && g.aiInputs[0].frame == frame {
+			if g.aiInputs[0].event.Action != QuitGame {
+				g.aiInputs[0].event.CharacterIndex = 1
+				g.HandleInput(g.aiInputs[0].event)
+			}
+			g.aiInputs = g.aiInputs[1:]
 		}
-		recordedInputs = recordedInputs[1:]
+
+		frame++
+
+		g.updateCharacter(0)
+		g.updateCharacter(1)
+
+		if !g.dieBounds.Overlaps(g.characters[0].Position) {
+			g.state = PlayerDying
+			g.playerDyingCountDown = PlayerDyingDelay
+		}
+
+		g.camera.CenterAround(g.characters[g.primaryCharIndex].Position.Center())
+	} else if g.state == PrePlaying {
+		g.camera.CenterAround(g.characters[g.primaryCharIndex].Position.Center())
+		g.prePlayCountDown--
+		if g.prePlayCountDown <= 0 {
+			g.state = Playing
+		}
+	} else if g.state == PlayerDying {
+		g.playerDyingCountDown--
+		if g.playerDyingCountDown <= 0 {
+			g.resetLevel()
+		}
 	}
+}
 
-	frame++
+func (g *Game) resetLevel() {
+	g.characters[0].SetBottomCenterTo(500, 537)
+	g.characters[0].Reset(RightDirectionIndex)
 
-	g.updateCharacter(0)
-	g.updateCharacter(1)
+	g.characters[1].SetBottomCenterTo(300, 537)
+	g.characters[1].Reset(RightDirectionIndex)
 
-	g.camera.CenterAround(g.characters[g.primaryCharIndex].Position.Center())
+	g.aiInputs = recordedInputs
+	frame = 0
+
+	g.state = PrePlaying
+	g.prePlayCountDown = PrePlayFrameDelay
 }
 
 func (g *Game) updateCharacter(charIndex int) {
@@ -259,9 +315,9 @@ func (g *Game) Render() {
 		}
 	}
 
-	//for i := range g.imageObjects {
-	//	g.imageObjects[i].Render()
-	//}
+	for i := range g.imageObjects {
+		g.imageObjects[i].Render()
+	}
 
 	g.characters[1].Render()
 	g.characters[0].Render()

@@ -21,6 +21,10 @@ func (r Rectangle) Center() (x, y int) {
 	return r.X + r.W/2, r.Y + r.H/2
 }
 
+func (r Rectangle) AddMargin(margin int) Rectangle {
+	return Rectangle{r.X - margin, r.Y - margin, r.W + 2*margin, r.H + 2*margin}
+}
+
 type Point struct {
 	X, Y int
 }
