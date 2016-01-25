@@ -1,13 +1,13 @@
 # Gophette's Great Adventure
 
-Gophette, the only female gopher in the village, was out for a walk in the forest when she heard a strange voice...
+Gophette, the only female Gopher in the Gocave, was out for a walk in the forest when she heard a strange voice...
 
 Evil Doctor Barney Starsoup is sitting in his cabin, looking at the programming language news groups and he has found out about the nice little language that Gophette so admires.
 
 ![Barney Starsoup](https://raw.githubusercontent.com/gophergala2016/gophette/master/screenshots/barney_starsoup.png)
 ![Gophette](https://raw.githubusercontent.com/gophergala2016/gophette/master/screenshots/gophette.png)
 
-Doctor Starsoup has a reputation of adding terrible features to perfectly fine languages and hence he seeks to find the secret Gopher Cave and make it his own.
+Doctor Starsoup has a reputation of adding terrible features to perfectly fine languages and hence he seeks to find the secret Gocave and make it his own.
 
 Can you beat Evil Doctor Barney Starsoup in a race to your home and warn the other Gophers about the threat before it is too late?
 
