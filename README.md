@@ -38,3 +38,7 @@ After installing these you should be able to go get it:
     go get github.com/gophergala2016/gophette
 
 and be ready to play.
+
+# About
+
+I created this as a solo project, meaning this is all programmer art (graphics and sound). I have created small games in the past, first in C++ and now in Go.
