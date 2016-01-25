@@ -42,3 +42,5 @@ and be ready to play.
 # About
 
 I created this as a solo project, meaning this is all programmer art (graphics and sound). I have created small games in the past, first in C++ and now in Go.
+
+I hope people enjoy this game and realize that Go is very capable of creating desktops apps.
