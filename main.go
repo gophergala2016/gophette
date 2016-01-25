@@ -37,7 +37,7 @@ func main() {
 	window.SetSize(800, 600)
 	sdl.ShowCursor(0)
 
-	window.SetFullscreen(sdl.WINDOW_FULLSCREEN_DESKTOP)
+    window.SetFullscreen(sdl.WINDOW_FULLSCREEN_DESKTOP)
 	fullscreen := true
 
 	camera := newWindowCamera(window.GetSize())
