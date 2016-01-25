@@ -1,10 +1,12 @@
 # Gophette's Great Adventure
 
-Gophette, the only female gopher in the village, is in trouble.
+Gophette, the only female gopher in the village, was out for a walk in the forest when she heard a strange voice...
 
-Evil Doctor Barney Starsoup has found out about the nice little village and seeks to compromise they idyll.
+Evil Doctor Barney Starsoup is sitting in his cabin, looking at the programming language news groups and he has found out about the nice little language that Gophette so admires.
 
-Beat the Evil Doctor and get back home earlier to warn the other gophers about the upcoming modernization of their home...
+Doctor Starsoup has a reputation of adding terrible features to perfectly fine languages and hence he seeks to find the secret Gopher Cave and make it his own.
+
+Can you beat Evil Doctor Barney Starsoup in a race to your home and warn the other Gophers about the threat before it is too late?
 
 # Build
 

@@ -6,7 +6,7 @@ const (
 	LosingSoundDelay     = 90
 	BarneyWinDelay       = 100
 	PlayerWinDelay       = 80
-	WhistleSoundDuration = 30
+	WhistleSoundDuration = 35
 	IntroDuration        = 930
 )
 

@@ -34,6 +34,7 @@ func main() {
 	defer renderer.Destroy()
 	defer window.Destroy()
 	window.SetTitle("Gophette's Adventures")
+	window.SetSize(800, 600)
 	sdl.ShowCursor(0)
 
 	window.SetFullscreen(sdl.WINDOW_FULLSCREEN_DESKTOP)

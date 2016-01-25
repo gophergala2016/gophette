@@ -145,9 +145,9 @@ func main() {
 
 	intro, err := xcf.LoadFromFile("./intro.xcf")
 	check(err)
-	resources["intro pc 1"] = imageToBytes(scaleImage(intro.GetLayerByName("pc 1")))
-	resources["intro pc 2"] = imageToBytes(scaleImage(intro.GetLayerByName("pc 2")))
-	resources["intro gophette"] = imageToBytes(scaleImage(intro.GetLayerByName("gophette")))
+	resources["intro pc 1"] = imageToBytes(scaleImageToFactor(intro.GetLayerByName("pc 1"), 0.67))
+	resources["intro pc 2"] = imageToBytes(scaleImageToFactor(intro.GetLayerByName("pc 2"), 0.67))
+	resources["intro gophette"] = imageToBytes(scaleImageToFactor(intro.GetLayerByName("gophette"), 0.67))
 
 	// the music file is too big, breaks IDE
 	/*
@@ -205,9 +205,13 @@ func findBottomRightNonTransparentPixel(img image.Image) (x, y int) {
 }
 
 func scaleImage(img image.Image) image.Image {
+	return scaleImageToFactor(img, scale)
+}
+
+func scaleImageToFactor(img image.Image, f float64) image.Image {
 	return resize.Resize(
-		uint(0.5+scale*float64(img.Bounds().Dx())),
-		uint(0.5+scale*float64(img.Bounds().Dy())),
+		uint(0.5+f*float64(img.Bounds().Dx())),
+		uint(0.5+f*float64(img.Bounds().Dy())),
 		img,
 		resize.Bicubic,
 	)
