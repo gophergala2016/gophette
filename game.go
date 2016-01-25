@@ -7,6 +7,7 @@ const (
 	BarneyWinDelay       = 100
 	PlayerWinDelay       = 80
 	WhistleSoundDuration = 30
+	IntroDuration        = 930
 )
 
 type Game struct {
@@ -22,6 +23,7 @@ type Game struct {
 	losingSoundCountDown int
 	barneyWinCountDown   int
 	playerWinCountDown   int
+	introCountUp         int
 
 	running          bool
 	characters       [2]*Character
@@ -31,11 +33,19 @@ type Game struct {
 	objects      []CollisionObject
 	imageObjects []ImageObject
 
-	winningSound   Sound
-	losingSound    Sound
-	fallingSound   Sound
-	barneyWinSound Sound
-	whistleSound   Sound
+	winningSound         Sound
+	losingSound          Sound
+	fallingSound         Sound
+	barneyWinSound       Sound
+	whistleSound         Sound
+	barneyIntroTextSound Sound
+	introInstructions    Sound
+
+	introPC1            Image
+	introPC2            Image
+	introGophette       Image
+	currentIntroPCImage int
+	introBarneyTalking  bool
 }
 
 type Camera interface {
@@ -59,6 +69,7 @@ const (
 	PlayerWinning
 	PlayerRealizingLoss
 	CameraShowsBarneyWinning
+	IntroPCScene
 )
 
 func NewGame(
@@ -68,36 +79,40 @@ func NewGame(
 	cameraFocusCharIndex int,
 ) *Game {
 	hero := NewHero(assets)
-	//hero.SetBottomCenterTo(500, 537)
-	hero.SetBottomCenterTo(8800, -800) // TODO
+	hero.SetBottomCenterTo(500, 537)
+	//hero.SetBottomCenterTo(8800, -800) // TODO
 	hero.Direction = RightDirectionIndex
 
 	barney := NewBarney(assets)
-	barney.SetBottomCenterTo(8500, -800)
-	//barney.SetBottomCenterTo(300, 537) // TODO
+	//barney.SetBottomCenterTo(8500, -800)
+	barney.SetBottomCenterTo(300, 537) // TODO
 	barney.Direction = RightDirectionIndex
 
 	cameraBounds := Rectangle{200, -1399, 9150, 2100}
 	cam.SetBounds(cameraBounds)
 
 	game := &Game{
-		running:          true,
-		graphics:         graphics,
-		characters:       [2]*Character{hero, barney},
-		primaryCharIndex: cameraFocusCharIndex,
-		camera:           cam,
-		dieBounds:        cameraBounds.AddMargin(200),
-		aiInputs:         recordedInputs,
-		goalBounds:       Rectangle{9200, -1000, 1000, 350},
-		winningSound:     assets.LoadSound("win"),
-		losingSound:      assets.LoadSound("lose"),
-		fallingSound:     assets.LoadSound("fall"),
-		barneyWinSound:   assets.LoadSound("barney wins"),
-		whistleSound:     assets.LoadSound("whistle"),
+		running:              true,
+		graphics:             graphics,
+		characters:           [2]*Character{hero, barney},
+		primaryCharIndex:     cameraFocusCharIndex,
+		camera:               cam,
+		dieBounds:            cameraBounds.AddMargin(200),
+		aiInputs:             recordedInputs,
+		goalBounds:           Rectangle{9200, -1000, 1000, 350},
+		winningSound:         assets.LoadSound("win"),
+		losingSound:          assets.LoadSound("lose"),
+		fallingSound:         assets.LoadSound("fall"),
+		barneyWinSound:       assets.LoadSound("barney wins"),
+		whistleSound:         assets.LoadSound("whistle"),
+		barneyIntroTextSound: assets.LoadSound("barney intro text"),
+		introInstructions:    assets.LoadSound("instructions"),
+		introPC1:             assets.LoadImage("intro pc 1"),
+		introPC2:             assets.LoadImage("intro pc 2"),
+		introGophette:        assets.LoadImage("intro gophette"),
 	}
 	game.loadLevel(assets, &level1)
-	game.state = PrePlaying
-	game.prePlayCountDown = PrePlayFrameDelay
+	game.state = IntroPCScene
 	return game
 }
 
@@ -150,7 +165,31 @@ func (g *Game) HandleInput(event InputEvent) {
 }
 
 func (g *Game) Update() {
-	if g.state == Playing {
+	if g.state == IntroPCScene {
+		g.introCountUp++
+
+		if g.introCountUp == 100 {
+			g.introBarneyTalking = true
+			g.barneyIntroTextSound.PlayOnce()
+		}
+		if g.currentIntroPCImage < 2 && g.introCountUp%10 == 0 {
+			g.currentIntroPCImage = 1 - g.currentIntroPCImage
+		}
+		if g.introCountUp == 580 {
+			g.currentIntroPCImage = 2
+		}
+		if g.introCountUp == 620 {
+			g.losingSound.PlayOnce()
+		}
+		if g.introCountUp == 700 {
+			g.introInstructions.PlayOnce()
+		}
+
+		if g.introCountUp >= IntroDuration {
+			g.prePlayCountDown = PrePlayFrameDelay
+			g.state = PrePlaying
+		}
+	} else if g.state == Playing {
 		for len(g.aiInputs) > 0 && g.aiInputs[0].frame == frame {
 			if g.aiInputs[0].event.Action != QuitGame {
 				g.aiInputs[0].event.CharacterIndex = 1
@@ -368,20 +407,27 @@ func (g *Game) Running() bool {
 }
 
 func (g *Game) Render() {
-	//for i := range g.objects {
-	//	if g.objects[i].Solidness == Solid {
-	//		g.graphics.FillRect(g.objects[i].Bounds, 30, 98, 98, 255)
-	//	} else {
-	//		g.graphics.FillRect(g.objects[i].Bounds, 133, 98, 98, 255)
-	//	}
-	//}
+	if g.state == IntroPCScene {
+		x, y := 1000, 0
+		g.camera.CenterAround(x, y)
+		g.graphics.ClearScreen(0, 0, 0)
 
-	for i := range g.imageObjects {
-		g.imageObjects[i].Render()
+		img := g.introPC1
+		if g.introBarneyTalking && g.currentIntroPCImage == 1 {
+			img = g.introPC2
+		}
+		if g.currentIntroPCImage == 2 {
+			img = g.introGophette
+		}
+
+		w, h := img.Size()
+		img.DrawAt(x-w/2, y-h/2)
+	} else {
+		for i := range g.imageObjects {
+			g.imageObjects[i].Render()
+		}
+
+		g.characters[1].Render()
+		g.characters[0].Render()
 	}
-
-	//g.graphics.FillRect(g.goalBounds, 0, 0, 0, 0)
-
-	g.characters[1].Render()
-	g.characters[0].Render()
 }

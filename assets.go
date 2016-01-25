@@ -2,6 +2,7 @@ package main
 
 type Graphics interface {
 	FillRect(rect Rectangle, r, g, b, a uint8)
+	ClearScreen(r, g, b uint8)
 }
 
 type Image interface {

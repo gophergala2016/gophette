@@ -244,3 +244,8 @@ func (graphics *sdlGraphics) FillRect(rect Rectangle, r, g, b, a uint8) {
 	sdlRect := sdl.Rect{int32(rect.X), int32(rect.Y), int32(rect.W), int32(rect.H)}
 	graphics.renderer.FillRect(&sdlRect)
 }
+
+func (graphics *sdlGraphics) ClearScreen(r, g, b uint8) {
+	check(graphics.renderer.SetDrawColor(r, g, b, 255))
+	graphics.renderer.Clear()
+}

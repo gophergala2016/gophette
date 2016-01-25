@@ -143,6 +143,12 @@ func main() {
 	resources["cave back"] = imageToBytes(scaleImage(cave.GetLayerByName("cave back")))
 	resources["cave front"] = imageToBytes(scaleImage(cave.GetLayerByName("cave front")))
 
+	intro, err := xcf.LoadFromFile("./intro.xcf")
+	check(err)
+	resources["intro pc 1"] = imageToBytes(scaleImage(intro.GetLayerByName("pc 1")))
+	resources["intro pc 2"] = imageToBytes(scaleImage(intro.GetLayerByName("pc 2")))
+	resources["intro gophette"] = imageToBytes(scaleImage(intro.GetLayerByName("gophette")))
+
 	// the music file is too big, breaks IDE
 	/*
 		music, err := ioutil.ReadFile("./background_music.ogg")
@@ -155,7 +161,9 @@ func main() {
 		"lose",
 		"fall",
 		"barney wins",
+		"barney intro text",
 		"whistle",
+		"instructions",
 	} {
 		data, err := ioutil.ReadFile(sound + ".wav")
 		check(err)
