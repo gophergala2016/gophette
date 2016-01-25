@@ -13,6 +13,9 @@ Can you beat Evil Doctor Barney Starsoup in a race to your home and warn the oth
 
 ![Race](https://raw.githubusercontent.com/gophergala2016/gophette/master/screenshots/race.png)
 
+Here is a vide of the gameplay:
+![Gameplay](https://github.com/gophergala2016/gophette/raw/master/screenshots/gameplay.flv)
+
 # Build
 
 Make sure you have the [SDL2 Go wrapper](https://github.com/veandco/go-sdl2) installed.
