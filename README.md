@@ -1,8 +1,8 @@
 # Repo moved
 
-The new repository locations is [this one](https://github.com/gonutz/gophette).
+The new repository location is [this one](https://github.com/gonutz/gophette).
 
-After the contest was over, I created this fork and continued working on it. There is now a Windows version that does not need any external library to create a window and it uses DirectX so no extra DLLs have to be installed on the target Windows machine since all necessary DLLs are packaged since Windows XP.
+After the contest was over, I created this fork and continued working on it. There is now a Windows version that does not need any external library to create a window and it uses DirectX so no extra DLLs have to be installed on the target Windows machine since all necessary DLLs are packaged since Windows XP. This makes it easy to build on Windows as well, you do not have to install SDL2, you only need Go and MinGW installed, the DirectX wrapper libraries will then build without any dependencies.
 
 Besides the Windows version, bugs were fixed, so your opponent will now run correctly even after the level is reset.
 
