@@ -1,3 +1,11 @@
+# Repo moved
+
+The new repository locations is [this one](https://github.com/gonutz/gophette).
+
+After the contest was over, I created this fork and continued working on it. There is now a Windows version that does not need any external library to create a window and it uses DirectX so no extra DLLs have to be installed on the target Windows machine since all necessary DLLs are packaged since Windows XP.
+
+Besides the Windows version, bugs were fixed, so your opponent will now run correctly even after the level is reset.
+
 # Gophette's Great Adventure
 
 Gophette, the only female Gopher in the Gocave, was out for a walk in the forest when she heard a strange voice...
